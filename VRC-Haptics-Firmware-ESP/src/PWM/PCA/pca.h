@@ -1,11 +1,27 @@
-#define PCA_FREQUENCY 1500
-#define PCA_1 0x40 
-#define PCA_2 0x41
+#include <Arduino.h>
+#include "Adafruit_PWMServoDriver.h"
+#include <vector> // I give up trying to get the other method working
+
+#include "globals.h"
+#include "software_defines.h"
+#include "config/config.h"
+#include "logging/Logger.h"
+
+#ifndef PCA_ME_H // don't want to intefere with offical library pca moduels
+#define PCA_ME_H
 
 #define MAP_OFFSET 1
 
-void startPCA();
+namespace Haptics {
+namespace PCA {
 
-void setPCAMotorDuty(uint8_t motorIndex, uint16_t dutyCycle);
-void setPcaDuty();
-void setAllPcaDuty(uint16_t duty);
+    void start(Config *conf);
+    void setPCAMotorDuty(uint8_t motorIndex, uint16_t dutyCycle);
+    void setPcaDuty(Globals *globals, Config *conf);
+    void setAllPcaDuty(uint16_t duty, Config *conf);
+} // namespace PCA
+} // namespace Haptics
+
+
+
+#endif // PCA_ME_H

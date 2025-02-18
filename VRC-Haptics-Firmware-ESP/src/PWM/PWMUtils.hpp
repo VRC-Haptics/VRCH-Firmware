@@ -1,50 +1,60 @@
 #include <Arduino.h>
 
-#include "globals.hpp"
-#include "config.hpp"
+#include "globals.h"
+#include "logging/Logger.h"
 
-void printMotorDuty() {
-    Serial.print("Motor Duty : ");
-    
-    for (uint8_t i = 0; i < totalMotors; i++) {
-        Serial.print(allMotorVals[i]);
-        Serial.print(", ");
+namespace Haptics {
+namespace PwmUtils {
+    Logging::Logger logger("Utils");
+
+    void printMotorDuty() {
+        const uint16_t totalMotors = conf.motor_map_i2c_num+conf.motor_map_ledc_num;
+        if (!totalMotors) {
+            logger.debug("No configured motors");
+            return;
+        }
+
+        Serial.print("Motor Duty : ");
+        for (uint8_t i = 0; i < totalMotors; i++) {
+            Serial.print(globals.allMotorVals[i]);
+            Serial.print(", ");
+        }
+
+        Serial.println("");
     }
 
-    Serial.println("");
-}
+    void printPCADuty() {
+        if (!conf.motor_map_i2c_num) {
+            return;
+        }
 
-#ifdef PCA_MAP
-void printPCADuty() {
-    Serial.print("PCA Duty : ");
-    
-    for (uint8_t i = 0; i < pcaMapLen; i++) {
-        Serial.print(pcaMotorVals[i]);
-        Serial.print(", ");
+        Serial.print("PCA Duty : ");
+        
+        for (uint8_t i = 0; i < conf.motor_map_i2c_num; i++) {
+            Serial.print(globals.pcaMotorVals[i]);
+            Serial.print(", ");
+        }
+
+        Serial.println("");
     }
 
-    Serial.println("");
-}
-#endif
+    void printLEDCDuty() {
+        if (!Haptics::conf.motor_map_i2c_num) return;
 
-
-void printLEDCDuty() {
-    Serial.print("LEDC Duty : ");
-    #ifdef LEDC_MAP
-    for (uint8_t i = 0; i < pcaMapLen; i++) {
-        Serial.print(ledcMotorVals[i]);
-        Serial.print(", ");
+        Serial.print("LEDC Duty : ");
+        for (uint8_t i = 0; i < conf.motor_map_ledc_num; i++) {
+            Serial.print(Haptics::globals.ledcMotorVals[i]);
+            Serial.print(", ");
+        }
+        Serial.println("");
     }
-    #else
-    Serial.print(ledcMotorVals[0]);
-    Serial.print(", ");
-    #endif
-    Serial.println("");
+
+
+    void printAllDuty() {
+        printMotorDuty();
+        printPCADuty();
+        printLEDCDuty();
+    }
+
 }
-
-
-void printAllDuty() {
-    printMotorDuty();
-    printPCADuty();
-    printLEDCDuty();
 }
