@@ -9,6 +9,8 @@
 
 namespace Haptics  {
 namespace Wireless {
+
+    inline bool first_packet = true;
     void printRaw();
     void updateMotorVals();
     void motorMessage_callback(const OscMessage& message);

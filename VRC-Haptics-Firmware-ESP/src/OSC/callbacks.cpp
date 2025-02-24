@@ -3,7 +3,6 @@
 
 namespace Haptics  {
 namespace Wireless { 
-    bool first_packet = true;
 
     bool printNext = false;
 
@@ -58,7 +57,7 @@ namespace Wireless {
             Haptics::globals.allMotorVals[i] = strtol(snippet, NULL, 16);
         }
 
-        // push the changes to the individual motor array's
+        // push the changes to the individual motor array's outside of ISR time
         Haptics::globals.updatedMotors = true;
         
     }
