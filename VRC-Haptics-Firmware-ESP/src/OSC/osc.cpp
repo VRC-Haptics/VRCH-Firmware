@@ -30,27 +30,30 @@ namespace Wireless
     
         // Start listening for OSC server
         OscWiFi.subscribe(RECIEVE_PORT, PING_ADDRESS, &handlePing);
-        logger.debug("WIFI: OSC: server started on port: %d", RECIEVE_PORT);
-    
-        StartMDNS(conf);// NEEDS TO BE AFTER SUBSCRIBER SET UP
+        logger.debug("Server started on port: %d", RECIEVE_PORT);
         
+        String mac = WiFi.macAddress();
+        String ip = WiFi.localIP().toString();
+        String name = conf->mdns_name;
+
+        broadcastMessage = "{";
+        broadcastMessage += "\"mac\":\"" + mac + "\",";
+        broadcastMessage += "\"ip\":\"" + ip + "\",";
+        broadcastMessage += "\"name\":\"" + name + "\",";
+        broadcastMessage += "\"port\":" + String(recvPort);
+        broadcastMessage += "}";
+        
+
+        udpClient.beginMulticast(IPAddress(MULTICAST_GROUP), MULTICAST_PORT);
+        Broadcast(); //broadcast first time
     }
     
-    void StartMDNS(Config *conf) {
-        //close any previous entries
-        MDNS.end();
-        delay(100);
-    
-        // Start mDNS service
-        if (MDNS.begin(conf->mdns_name)) {
-            MDNS.addService(MDNS_SERVICE_NAME, MDNS_SERVICE_PROTOCOL, RECIEVE_PORT);  // Advertise the service
-            MDNS.addServiceTxt(MDNS_SERVICE_NAME, MDNS_SERVICE_PROTOCOL, "MAC", WiFi.macAddress());
-            logger.debug("WIFI: mDNS service started");
-    
-        } else {
-            logger.error("WIFI: Error starting mDNS");
-        }
-    
+    void Broadcast() {
+        // Send broadcast
+        logger.debug("broadcast message: %s", broadcastMessage.c_str());
+        udpClient.beginPacket(IPAddress(MULTICAST_GROUP), MULTICAST_PORT);
+        udpClient.write((uint8_t*)broadcastMessage.c_str(), broadcastMessage.length());  // Send data
+        udpClient.endPacket();  // Ensure packet is sent
     }
     
     bool WiFiConnected(){

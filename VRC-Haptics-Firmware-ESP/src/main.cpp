@@ -103,6 +103,11 @@ void loop() {
     Haptics::PwmUtils::printAllDuty();
     Haptics::Wireless::printRawPacket();
 
+    // broadcast every second until we recieve our first packet
+    if (Haptics::Wireless::first_packet) {
+      Haptics::Wireless::Broadcast();
+    }
+    
     //float ratio = (float)Haptics::profiler.digitalWriteCycles / loopTotal;
     //logger.debug("tested ratio: %f", ratio);
     //Haptics::profiler.digitalWriteCycles = 0;

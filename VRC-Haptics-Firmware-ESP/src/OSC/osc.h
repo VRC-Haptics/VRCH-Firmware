@@ -7,6 +7,7 @@
     #include <ESP8266WiFi.h>
 #else 
     #include <WiFi.h>
+    #include <WiFiUdp.h>
     #include <ESPmDNS.h>
 #endif
 
@@ -24,8 +25,10 @@ namespace Wireless {
 
 // OSC client to send messages back to the hosts
 inline OscWiFiClient oscClient;
+inline WiFiUDP udpClient;
 inline String hostIP;
 inline uint16_t sendPort;
+inline String broadcastMessage;
 
 //publisher references
 inline OscPublishElementRef heartbeatPublisher;
@@ -36,10 +39,10 @@ inline uint32_t recvPort = RECIEVE_PORT;
 
 inline Logging::Logger logger("WIFI");
 
-void StartMDNS(Config *conf);
 void StartHeartBeat( String hostIP, uint16_t sendPort);
 void handlePing(const OscMessage& message);
 
+void Broadcast();
 void Start(Config *conf);
 bool WiFiConnected();
 void Tick();
