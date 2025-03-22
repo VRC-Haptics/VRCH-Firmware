@@ -97,6 +97,7 @@ namespace Wireless
         if (!heartbeatPublisher){
            StartHeartBeat(hostIP, sendPort);
         }
+        globals.beenPinged = true;
     
     }
     

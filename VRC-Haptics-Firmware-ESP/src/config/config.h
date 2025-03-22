@@ -3,6 +3,9 @@
 #define CONFIG_H
 #include "Arduino.h"
 #include "software_defines.h"
+#include "logging/Logger.h"
+
+static const u_int NODE_MAP_SIZE = (MAX_MOTORS * ((NODE_LOCATION_DIGITS*3) + 3)) * 2;
 
 namespace Haptics {
 
@@ -11,6 +14,7 @@ namespace Haptics {
         char wifi_ssid[32];
         char wifi_password[64];
         char mdns_name[12];
+        char node_map[NODE_MAP_SIZE];
         uint8_t i2c_scl;
         uint8_t i2c_sda;
         uint32_t i2c_speed;
@@ -28,6 +32,7 @@ namespace Haptics {
     "SlimeServer", //ssid
     "95815480", //password
     "VRCHaptics", // name that will be displayed on the gui
+    "", // Will be set via Serial or wifi.
     SCL, // scl default of board
     SDA, // sda default of board
     400000U, // i2c clock
@@ -35,7 +40,7 @@ namespace Haptics {
     {0}, 
     0,
     {0},
-    CONFIG_VERSION,
+    CONFIG_VERSION
     };
 
     /// @brief Loads config to global instance
@@ -75,6 +80,7 @@ namespace Haptics {
         CONFIG_FIELD(wifi_ssid,     CONFIG_TYPE_STRING, sizeof(((Config*)0)->wifi_ssid)),
         CONFIG_FIELD(wifi_password, CONFIG_TYPE_STRING, sizeof(((Config*)0)->wifi_password)),
         CONFIG_FIELD(mdns_name,     CONFIG_TYPE_STRING, sizeof(((Config*)0)->mdns_name)),
+        CONFIG_FIELD(node_map,      CONFIG_TYPE_STRING, sizeof(((Config*)0)->node_map)),
         CONFIG_FIELD(i2c_scl,       CONFIG_TYPE_UINT8,  0),
         CONFIG_FIELD(i2c_sda,       CONFIG_TYPE_UINT8,  0),
         CONFIG_FIELD(i2c_speed,     CONFIG_TYPE_UINT32, 0),
@@ -82,7 +88,7 @@ namespace Haptics {
         CONFIG_FIELD_ARRAY(motor_map_i2c, CONFIG_TYPE_UINT16, MAX_I2C_MOTORS),
         CONFIG_FIELD(motor_map_ledc_num, CONFIG_TYPE_UINT16, 0),
         CONFIG_FIELD_ARRAY(motor_map_ledc, CONFIG_TYPE_UINT16, MAX_LEDC_MOTORS),
-        CONFIG_FIELD(config_version,CONFIG_TYPE_UINT16, 0)
+        CONFIG_FIELD(config_version, CONFIG_TYPE_UINT16, 0)
     };
     static const size_t configFieldsCount = sizeof(configFields) / sizeof(configFields[0]);
 

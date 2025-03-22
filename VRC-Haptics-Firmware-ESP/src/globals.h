@@ -14,6 +14,7 @@ namespace Haptics {
         bool reinitLEDC;
         bool processOscCommand; // moves the heavy commands out of ISR time
         bool processSerCommand;
+        bool beenPinged;
         String commandToProcess;
     };
 
@@ -24,6 +25,7 @@ namespace Haptics {
         g.processOscCommand = false;
         g.processSerCommand = false;
         g.commandToProcess = "";
+        g.beenPinged = false;
         return g;
     }
 

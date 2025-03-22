@@ -13,14 +13,7 @@ namespace PwmUtils {
             logger.debug("No configured motors");
             return;
         }
-
-        Serial.print("Motor Duty : ");
-        for (uint8_t i = 0; i < totalMotors; i++) {
-            Serial.print(globals.allMotorVals[i]);
-            Serial.print(", ");
-        }
-
-        Serial.println("");
+        logger.debugArray("All Duty: ", globals.allMotorVals, totalMotors);
     }
 
     void printPCADuty() {
@@ -28,25 +21,13 @@ namespace PwmUtils {
             return;
         }
 
-        Serial.print("PCA Duty : ");
-        
-        for (uint8_t i = 0; i < conf.motor_map_i2c_num; i++) {
-            Serial.print(globals.pcaMotorVals[i]);
-            Serial.print(", ");
-        }
-
-        Serial.println("");
+        logger.debugArray("I2C Duty: ", globals.pcaMotorVals, conf.motor_map_i2c_num);
     }
 
     void printLEDCDuty() {
-        if (!Haptics::conf.motor_map_i2c_num) return;
+        if (!Haptics::conf.motor_map_ledc_num) return;
 
-        Serial.print("LEDC Duty : ");
-        for (uint8_t i = 0; i < conf.motor_map_ledc_num; i++) {
-            Serial.print(Haptics::globals.ledcMotorVals[i]);
-            Serial.print(", ");
-        }
-        Serial.println("");
+        logger.debugArray("LEDC Duty: ", globals.ledcMotorVals, conf.motor_map_ledc_num);
     }
 
 

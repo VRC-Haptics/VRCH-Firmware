@@ -60,7 +60,6 @@ uint32_t loopTotal = 0;
 
 
 void loop() {
-  loopStart = ESP.getCycleCount();
   
   if (Haptics::globals.reinitLEDC) { // prevents not defined error
     Haptics::LEDC::start(&Haptics::conf);
@@ -77,14 +76,18 @@ void loop() {
     Haptics::globals.updatedMotors = false;
     Haptics::Wireless::updateMotorVals();
   }
-  if (Haptics::globals.processOscCommand) { // if we were sent a command over OSC
-    String response = Haptics::parseInput(Haptics::globals.commandToProcess);
+
+  if (Haptics::globals.processOscCommand) { 
+    // if we were sent a command over OSC
+    const String response = Haptics::parseInput(Haptics::globals.commandToProcess);
     OscMessage commandResponse(COMMAND_ADDRESS);
     commandResponse.pushString(response);
-    Haptics::Wireless::oscClient.send(Haptics::Wireless::hostIP, Haptics::Wireless::sendPort, response);
+    Haptics::Wireless::oscClient.send(Haptics::Wireless::hostIP, Haptics::Wireless::sendPort, commandResponse);
     Haptics::globals.commandToProcess = "";
     Haptics::globals.processOscCommand = false;
-  } else if (Haptics::globals.processSerCommand) { // If we were sent a command over serial
+    
+  } else if (Haptics::globals.processSerCommand) { 
+    // If we were sent a command over serial
     String response = Haptics::parseInput(Haptics::globals.commandToProcess);
     Serial.println(response);
     Haptics::globals.processSerCommand = false;
@@ -96,7 +99,6 @@ void loop() {
     Haptics::Wireless::Tick();
     lastWifiTick = now;
   }
-  loopTotal += ESP.getCycleCount() - loopStart;
 
   if (now - lastSerialPush >= 1000) {
     logger.debug("Loop/sec: %d", ticks);
@@ -104,14 +106,9 @@ void loop() {
     Haptics::Wireless::printRawPacket();
 
     // broadcast every second until we recieve our first packet
-    if (Haptics::Wireless::first_packet) {
+    if (!Haptics::globals.beenPinged) {
       Haptics::Wireless::Broadcast();
     }
-    
-    //float ratio = (float)Haptics::profiler.digitalWriteCycles / loopTotal;
-    //logger.debug("tested ratio: %f", ratio);
-    //Haptics::profiler.digitalWriteCycles = 0;
-    loopTotal = 0;
 
     lastSerialPush = now;
     ticks = 0;

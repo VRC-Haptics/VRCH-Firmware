@@ -3,188 +3,167 @@
 #include <LittleFS.h>
 
 #include "config.h"  // has Config and defaultConfig
+#include "config_parser.h"
 #include "logging/Logger.h"
 
 namespace Haptics {
 
     Logging::Logger logger("Haptics");
 
-    // Load configuration or init to defaults
     void loadConfig() {
-        // If the config file doesn't exist, write default configuration
+        // Check if the config file exists.
         if (!LittleFS.exists("/config.json")) {
-            Serial.println("Config file not found. Creating default config.");
-            DynamicJsonDocument doc(JSON_SIZE);
-            doc["wifi_ssid"] = defaultConfig.wifi_ssid;
-            doc["wifi_password"] = defaultConfig.wifi_password;
-            doc["i2c_scl"] = defaultConfig.i2c_scl;
-            doc["i2c_sda"] = defaultConfig.i2c_sda;
-            doc["i2c_speed"] = defaultConfig.i2c_speed;
-            doc["motor_map_i2c_num"] = defaultConfig.motor_map_i2c_num;
-            JsonArray motorMapI2cArray = doc.createNestedArray("motor_map_i2c");
-            for (int i = 0; i < defaultConfig.motor_map_i2c_num; i++) {
-                motorMapI2cArray.add(defaultConfig.motor_map_i2c[i]);
-            }
-
-            // Save motor map for LEDC
-            doc["motor_map_ledc_num"] = defaultConfig.motor_map_ledc_num;
-            JsonArray motorMapLedcArray = doc.createNestedArray("motor_map_ledc");
-            for (int i = 0; i < defaultConfig.motor_map_ledc_num; i++) {
-                motorMapLedcArray.add(defaultConfig.motor_map_ledc[i]);
-            }
-
-            doc["mdns_name"] = defaultConfig.mdns_name;
-            
-            File configFile = LittleFS.open("/config.json", "w");
-            if (configFile) {
-                serializeJson(doc, configFile);
-                configFile.close();
-                // Use default configuration in memory
-                memcpy(&Haptics::conf, &defaultConfig, sizeof(Config));
-            } else {
-                Serial.println("Failed to create config file");
-            }
+            logger.debug("Config file not found. Creating default config.");
+            memcpy(&conf, &defaultConfig, sizeof(Config));
+            saveConfig();  // write the default config to file
             return;
         }
-    
-        // If the file exists, read and parse it
+
         File configFile = LittleFS.open("/config.json", "r");
-        if (configFile) {
-            DynamicJsonDocument doc(JSON_SIZE);
-            DeserializationError error = deserializeJson(doc, configFile);
-            if (!error) {
-                // Check the version (if we set to zero in fw refresh every time)
-                uint16_t fileVersion = doc["config_version"] | 0;
-                if (fileVersion < defaultConfig.config_version || defaultConfig.config_version == 0) {
-                    Serial.println("Config version is outdated. Updating to defaults.");
-                    // Overwrite with new defaults. TODO: Merge changed defaults?
-                    File configFileWrite = LittleFS.open("/config.json", "w");
-                    if (configFileWrite) {
-                        doc.clear();
-                        doc["wifi_ssid"] = defaultConfig.wifi_ssid;
-                        doc["wifi_password"] = defaultConfig.wifi_password;
-                        doc["i2c_scl"] = defaultConfig.i2c_scl;
-                        doc["i2c_sda"] = defaultConfig.i2c_sda;
-                        doc["i2c_speed"] = defaultConfig.i2c_speed;
-                        doc["motor_map_i2c_num"] = defaultConfig.motor_map_i2c_num;
-                        JsonArray motorMapI2cArray = doc.createNestedArray("motor_map_i2c");
-                        for (int i = 0; i < defaultConfig.motor_map_i2c_num; i++) {
-                            motorMapI2cArray.add(defaultConfig.motor_map_i2c[i]);
-                        }
-                        doc["motor_map_ledc_num"] = defaultConfig.motor_map_ledc_num;
-                        JsonArray motorMapLedcArray = doc.createNestedArray("motor_map_ledc");
-                        for (int i = 0; i < defaultConfig.motor_map_ledc_num; i++) {
-                            motorMapLedcArray.add(defaultConfig.motor_map_ledc[i]);
-                        }
-                        doc["mdns_name"] = defaultConfig.mdns_name;
-                        doc["config_version"] = defaultConfig.config_version;
-                        
-                        serializeJson(doc, configFileWrite);
-                        configFileWrite.close();
-                        memcpy(&Haptics::conf, &defaultConfig, sizeof(Config));
-                        configFile.close();
-                        return;
-                    } else {
-                        Serial.println("Failed to update config file");
-                    }
-                }
-
-                // Load WiFi settings (using defaults if missing)
-                const char* ssid = doc["wifi_ssid"] | defaultConfig.wifi_ssid;
-                const char* password = doc["wifi_password"] | defaultConfig.wifi_password;
-                strncpy(Haptics::conf.wifi_ssid, ssid, sizeof(Haptics::conf.wifi_ssid));
-                strncpy(Haptics::conf.wifi_password, password, sizeof(Haptics::conf.wifi_password));
-                
-                // Load I2C settings
-                Haptics::conf.i2c_scl = doc["i2c_scl"] | defaultConfig.i2c_scl;
-                Haptics::conf.i2c_sda = doc["i2c_sda"] | defaultConfig.i2c_sda;
-                Haptics::conf.i2c_speed = doc["i2c_speed"] | defaultConfig.i2c_speed;
-                
-                // Load motor map for I2C
-                Haptics::conf.motor_map_i2c_num = doc["motor_map_i2c_num"] | defaultConfig.motor_map_i2c_num;
-                JsonArray motorMapI2cArray = doc["motor_map_i2c"].as<JsonArray>();
-                if (motorMapI2cArray) {
-                    int index = 0;
-                    for (JsonVariant value : motorMapI2cArray) {
-                        if (index < MAX_I2C_MOTORS) {
-                            Haptics::conf.motor_map_i2c[index] = value.as<uint16_t>();
-                        }
-                        index++;
-                    }
-                } else {
-                    // Fallback to default array if not present
-                    memcpy(Haptics::conf.motor_map_i2c, defaultConfig.motor_map_i2c, sizeof(Haptics::conf.motor_map_i2c));
-                }
-                
-                // Load motor map for LEDC
-                Haptics::conf.motor_map_ledc_num = doc["motor_map_ledc_num"] | defaultConfig.motor_map_ledc_num;
-                JsonArray motorMapLedcArray = doc["motor_map_ledc"].as<JsonArray>();
-                if (motorMapLedcArray) {
-                    int index = 0;
-                    for (JsonVariant value : motorMapLedcArray) {
-                        if (index < MAX_LEDC_MOTORS) {
-                            Haptics::conf.motor_map_ledc[index] = value.as<uint16_t>();
-                        }
-                        index++;
-                    }
-                } else {
-                    // Fallback to default array if not present
-                    memcpy(Haptics::conf.motor_map_ledc, defaultConfig.motor_map_ledc, sizeof(Haptics::conf.motor_map_ledc));
-                }
-
-                // Load mdns_name
-                const char* mdnsName = doc["mdns_name"] | defaultConfig.mdns_name;
-                strncpy(Haptics::conf.mdns_name, mdnsName, sizeof(Haptics::conf.mdns_name));
-                doc["config_version"] = defaultConfig.config_version;
-                logger.debug("Loaded config:");
-                serializeJsonPretty(doc, Serial);
-                Serial.println("");
-                
-            } else {
-                Serial.println("Failed to parse config file, using default config.");
-                memcpy(&Haptics::conf, &defaultConfig, sizeof(Config));
-            }
-            configFile.close();
+        if (!configFile) {
+            logger.error("Failed to open config file for reading.");
+            memcpy(&conf, &defaultConfig, sizeof(Config));
+            return;
         }
+
+        DynamicJsonDocument doc(JSON_SIZE);
+        DeserializationError error = deserializeJson(doc, configFile);
+        configFile.close();
+        if (error) {
+            logger.error("Failed to parse config file, using default config.");
+            memcpy(&conf, &defaultConfig, sizeof(Config));
+            return;
+        }
+
+        // For each configurable field, load its value (or fallback to default)
+        for (size_t i = 0; i < configFieldsCount; i++) {
+            const ConfigFieldDescriptor &field = configFields[i];
+            uint8_t *confFieldPtr = ((uint8_t*)&conf) + field.offset;
+            // Check whether the field exists in the JSON document
+            if (doc.containsKey(field.name)) {
+                switch (field.type) {
+                    case CONFIG_TYPE_STRING: {
+                        const char* value = doc[field.name] | ((const char*)(((uint8_t*)&defaultConfig) + field.offset));
+                        // Make sure not to overflow the destination
+                        strncpy((char*)confFieldPtr, value, field.size);
+                        break;
+                    }
+                    case CONFIG_TYPE_UINT8: {
+                        *((uint8_t*)confFieldPtr) = doc[field.name] | *((uint8_t*)(((uint8_t*)&defaultConfig) + field.offset));
+                        break;
+                    }
+                    case CONFIG_TYPE_UINT16: {
+                        *((uint16_t*)confFieldPtr) = doc[field.name] | *((uint16_t*)(((uint8_t*)&defaultConfig) + field.offset));
+                        break;
+                    }
+                    case CONFIG_TYPE_UINT32: {
+                        *((uint32_t*)confFieldPtr) = doc[field.name] | *((uint32_t*)(((uint8_t*)&defaultConfig) + field.offset));
+                        break;
+                    }
+                    case CONFIG_TYPE_FLOAT: {
+                        *((float*)confFieldPtr) = doc[field.name] | *((float*)(((uint8_t*)&defaultConfig) + field.offset));
+                        break;
+                    }
+                    case CONFIG_TYPE_ARRAY: {
+                        JsonArray arr = doc[field.name].as<JsonArray>();
+                        if (arr) {
+                            // Here we assume the array is of type uint16_t (adjust if necessary)
+                            for (size_t j = 0; j < field.size && j < arr.size(); j++) {
+                                ((uint16_t*)confFieldPtr)[j] = arr[j] | (((uint16_t*)(((uint8_t*)&defaultConfig) + field.offset))[j]);
+                            }
+                        } else {
+                            // Field exists in the JSON but is not an array? Fallback to default.
+                            memcpy(confFieldPtr, ((uint8_t*)&defaultConfig) + field.offset, field.size * sizeof(uint16_t));
+                        }
+                        break;
+                    }
+                    default:
+                        logger.error("Unsupported config field type for field:");
+                        logger.error(field.name);
+                        break;
+                }
+            } else {
+                // Field not present in file: use default value
+                uint8_t *defaultFieldPtr = ((uint8_t*)&defaultConfig) + field.offset;
+                // For strings use strncpy; for numbers or arrays, copy the raw bytes
+                if (field.type == CONFIG_TYPE_STRING) {
+                    strncpy((char*)confFieldPtr, (const char*)defaultFieldPtr, field.size);
+                } else if (field.type == CONFIG_TYPE_ARRAY) {
+                    memcpy(confFieldPtr, defaultFieldPtr, field.size * sizeof(uint16_t));
+                } else {
+                    // For scalars we assume the size is that of the type
+                    memcpy(confFieldPtr, defaultFieldPtr, sizeof(uint32_t));  // works for uint8_t, uint16_t, uint32_t, float
+                }
+            }
+        }
+
+        // Check for a config version mismatch (or missing config_version indicates an old file)
+        uint16_t fileVersion = doc["config_version"] | 0;
+        if (fileVersion < defaultConfig.config_version || defaultConfig.config_version == 0) {
+            logger.debug("Config version outdated. Merging new defaults and updating file.");
+            saveConfig();
+        }
+
+        logger.debug("Loaded config:");
+        serializeJsonPretty(doc, Serial);
+        Serial.println();
     }
-    
-    // Function to save the current configuration to LittleFS
+
+    // Updated saveConfig() function
     void saveConfig() {
         DynamicJsonDocument doc(JSON_SIZE);
-        doc["wifi_ssid"] = Haptics::conf.wifi_ssid;
-        doc["wifi_password"] = Haptics::conf.wifi_password;
 
-        doc["i2c_scl"] = Haptics::conf.i2c_scl;
-        doc["i2c_sda"] = Haptics::conf.i2c_sda;
-        doc["i2c_speed"] = Haptics::conf.i2c_speed;
-
-        doc["motor_map_i2c_num"] = Haptics::conf.motor_map_i2c_num;
-        JsonArray motorMapI2cArray = doc.createNestedArray("motor_map_i2c");
-        for (int i = 0; i < Haptics::conf.motor_map_i2c_num; i++) {
-            motorMapI2cArray.add(Haptics::conf.motor_map_i2c[i]);
+        // For each configurable field, write its value from conf to the JSON document.
+        for (size_t i = 0; i < configFieldsCount; i++) {
+            const ConfigFieldDescriptor &field = configFields[i];
+            uint8_t *confFieldPtr = ((uint8_t*)&conf) + field.offset;
+            switch (field.type) {
+                case CONFIG_TYPE_STRING: {
+                    doc[field.name] = (const char*)confFieldPtr;
+                    break;
+                }
+                case CONFIG_TYPE_UINT8: {
+                    doc[field.name] = *((uint8_t*)confFieldPtr);
+                    break;
+                }
+                case CONFIG_TYPE_UINT16: {
+                    doc[field.name] = *((uint16_t*)confFieldPtr);
+                    break;
+                }
+                case CONFIG_TYPE_UINT32: {
+                    doc[field.name] = *((uint32_t*)confFieldPtr);
+                    break;
+                }
+                case CONFIG_TYPE_FLOAT: {
+                    doc[field.name] = *((float*)confFieldPtr);
+                    break;
+                }
+                case CONFIG_TYPE_ARRAY: {
+                    // For array fields, we create a nested JSON array.
+                    JsonArray arr = doc.createNestedArray(field.name);
+                    // Assuming here the array contains uint16_t elements.
+                    for (size_t j = 0; j < field.size; j++) {
+                        arr.add(((uint16_t*)confFieldPtr)[j]);
+                    }
+                    break;
+                }
+                default:
+                    logger.error("Unsupported config field type during save for field:");
+                    logger.error(field.name);
+                    break;
+            }
         }
-        // Save motor map for LEDC
-        /// TODO: stop this from assigning 0 to all the ledc channels by default (most 0 pins are tx or rx)
-        doc["motor_map_ledc_num"] = Haptics::conf.motor_map_ledc_num;
-        JsonArray motorMapLedcArray = doc.createNestedArray("motor_map_ledc");
-        for (int i = 0; i < Haptics::conf.motor_map_ledc_num; i++) {
-            motorMapLedcArray.add(Haptics::conf.motor_map_ledc[i]);
-        }
-        
-        doc["mdns_name"] = Haptics::conf.mdns_name;
 
-        doc["config_version"] = defaultConfig.config_version; /// DON't forget to add a save block, 4hrs down HHHHHHHHHHHHHHHHHHHH
-
+        // Write the entire config document to file.
         File configFile = LittleFS.open("/config.json", "w");
         if (configFile) {
             serializeJson(doc, configFile);
             configFile.close();
-            Serial.println("Configuration saved.");
-            char printBuff[JSON_SIZE] = "";
+            logger.debug("Configuration saved.");
             serializeJsonPretty(doc, Serial);
-            Serial.println("");
+            Serial.println();
         } else {
-            Serial.println("Failed to open config file for writing.");
+            logger.error("Failed to open config file for writing.");
         }
     }
 } // namespace Haptics

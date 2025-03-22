@@ -86,6 +86,7 @@ private:
 
 		for (size_t i = 0; i < size; i++) {
 			Serial.print(array[i]);
+			Serial.print(", ");
 		}
 
 		Serial.println();

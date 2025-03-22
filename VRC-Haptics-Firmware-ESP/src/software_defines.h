@@ -6,6 +6,7 @@
 /// Motor defines (define JSON_SIZE if more than 128 total)
 #define MAX_I2C_MOTORS  64
 #define MAX_LEDC_MOTORS 64
+#define MAX_MOTORS MAX_I2C_MOTORS + MAX_LEDC_MOTORS
 
 // pwm frequency of pca motors
 #define PCA_FREQUENCY 1500 
@@ -29,6 +30,8 @@
 
 // internal (calculated for 64 motors on each)
 #define JSON_SIZE 4096
+#define NODE_LOCATION_DIGITS 4 
+#define MAX_NODE_GROUPS 10
 
 #define CONFIG_VERSION 1
 

@@ -1,16 +1,15 @@
 #include "config_parser.h"
 #include "config.h"
-
+#include <ArduinoJson.h>
+#include "logging///logger.h"
 
 namespace Haptics {
+
 
     // Helper: Given a pointer to conf and a descriptor, return a pointer to the field.
     inline void* getFieldPtr(const ConfigFieldDescriptor& desc) {
         return ((uint8_t*)&conf) + desc.offset;
     }
-
-    String getArrayFieldValue(void* ptr, const ConfigFieldDescriptor &field);
-    bool setArrayFieldValue(void* ptr, const ConfigFieldDescriptor &field, const String& input);
 
     /// @brief Cuts the input string into command, keys, and value tokens.
     /// @param input String to cut up
@@ -41,11 +40,118 @@ namespace Haptics {
     /// @param value Which value to set the keyword to
     /// @return Feedback to return
     String handleSet(const String &key, const String &value) {
-        // "ALL DEFAULT" resets the config to default values.
-        if (key.equalsIgnoreCase("ALL") && value.equalsIgnoreCase("DEFAULT")) {
-            conf = defaultConfig;
-            return "Config reset to default";
-        }
+        // Special handling for "ALL" command
+        if (key.equalsIgnoreCase("ALL")) {
+            // "ALL DEFAULT" resets the config to default values.
+            if (value.equalsIgnoreCase("DEFAULT")) {
+                conf = defaultConfig;
+                //logger.warn("Config reset to default");
+                return "Config reset to default";
+            } else {
+                // parse the provided JSON string.
+                //logger.debug("Updating config from JSON");
+                StaticJsonDocument<JSON_SIZE> doc;
+                DeserializationError error = deserializeJson(doc, value);
+                if (error) {
+                    //logger.error("Failed to parse config JSON: %s", error.c_str());
+                    return "Error: Invalid config JSON";
+                }
+                // Iterate over each field descriptor and update if JSON contains the field.
+                for (size_t i = 0; i < configFieldsCount; i++) {
+                    const ConfigFieldDescriptor& field = configFields[i];
+                    if (doc.containsKey(field.name)) {
+                        void* ptr = getFieldPtr(field);
+                        switch (field.type) {
+                            case CONFIG_TYPE_STRING: {
+                                const char* str = doc[field.name];
+                                if (strlen(str) < field.size) {
+                                    strncpy((char*)ptr, str, field.size);
+                                    //logger.debug("%s set to %s", field.name, str);
+                                } else {
+                                    //logger.debug("Value for %s is too long", field.name);
+                                    return String("Error: Failed to set ") + field.name;
+                                }
+                                break;
+                            }
+                            case CONFIG_TYPE_UINT8:
+                                *(uint8_t*)ptr = doc[field.name].as<uint8_t>();
+                                //logger.debug("%s set to %d", field.name, *(uint8_t*)ptr);
+                                break;
+                            case CONFIG_TYPE_UINT16:
+                                *(uint16_t*)ptr = doc[field.name].as<uint16_t>();
+                                //logger.debug("%s set to %d", field.name, *(uint16_t*)ptr);
+                                break;
+                            case CONFIG_TYPE_UINT32:
+                                *(uint32_t*)ptr = doc[field.name].as<uint32_t>();
+                                //logger.debug("%s set to %lu", field.name, *(uint32_t*)ptr);
+                                break;
+                            case CONFIG_TYPE_FLOAT:
+                                *(float*)ptr = doc[field.name].as<float>();
+                                //logger.debug("%s set to %f", field.name, *(float*)ptr);
+                                break;
+                            case CONFIG_TYPE_ARRAY: {
+                                JsonArray arr = doc[field.name].as<JsonArray>();
+                                if (arr.isNull()) {
+                                    //logger.error("%s is not a valid JSON array", field.name);
+                                    return String("Error: Failed to set ") + field.name + " (invalid array)";
+                                }
+                                size_t count = 0;
+                                for (JsonVariant v : arr) {
+                                    if (count < field.size) {
+                                        switch (field.subType) {
+                                            case CONFIG_TYPE_UINT8:
+                                                ((uint8_t*)ptr)[count] = v.as<uint8_t>();
+                                                break;
+                                            case CONFIG_TYPE_UINT16:
+                                                ((uint16_t*)ptr)[count] = v.as<uint16_t>();
+                                                break;
+                                            case CONFIG_TYPE_UINT32:
+                                                ((uint32_t*)ptr)[count] = v.as<uint32_t>();
+                                                break;
+                                            case CONFIG_TYPE_FLOAT:
+                                                ((float*)ptr)[count] = v.as<float>();
+                                                break;
+                                            default:
+                                                //logger.error("Unsupported array subtype for %s", field.name);
+                                                return String("Error: Unsupported array subtype for ") + field.name;
+                                        }
+                                        count++;
+                                    } else {
+                                        //logger.error("Too many elements for array %s", field.name);
+                                        return String("Error: Failed to set ") + field.name + " (too many elements)";
+                                    }
+                                }
+                                // Clear remaining elements if any.
+                                for (size_t j = count; j < field.size; j++) {
+                                    switch (field.subType) {
+                                        case CONFIG_TYPE_UINT8:
+                                            ((uint8_t*)ptr)[j] = 0;
+                                            break;
+                                        case CONFIG_TYPE_UINT16:
+                                            ((uint16_t*)ptr)[j] = 0;
+                                            break;
+                                        case CONFIG_TYPE_UINT32:
+                                            ((uint32_t*)ptr)[j] = 0;
+                                            break;
+                                        case CONFIG_TYPE_FLOAT:
+                                            ((float*)ptr)[j] = 0.0f;
+                                            break;
+                                        default:
+                                            break;
+                                    }
+                                }
+                                //logger.debug("%s updated with array values", field.name);
+                                break;
+                            }
+                            default:
+                                //logger.error("Unsupported type for %s", field.name);
+                                return String("Error: Unsupported type for ") + field.name;
+                        } // switch
+                    } // if doc.containsKey
+                } // for
+                return "Config updated from JSON";
+            }
+        } // end if key equals "ALL"
 
         const ConfigFieldDescriptor* field = getConfigFieldDescriptor(key);
         if (!field) {
