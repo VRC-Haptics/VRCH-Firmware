@@ -33,12 +33,15 @@ void setup() {
   // Initialize LittleFS
   #if defined(ESP8266)
   if (!LittleFS.begin()) { // ESP8 doesnt? have the format fucntion i guess
-  #else
-  if (!LittleFS.begin(true)) {
-  #endif
     logger.error("LittleFS mount failed, please restart");
     return;
   }
+  #else
+  if (!LittleFS.begin(true)) {
+    logger.error("LittleFS mount failed, please restart");
+    return;
+  }
+  #endif
 
   Haptics::loadConfig();
   Haptics::initGlobals();
@@ -57,7 +60,7 @@ time_t lastWifiTick = millis();
 #define TIMER_END Haptics::profiler.digitalWriteCycles += (ESP.getCycleCount() - dwStart);
 uint32_t loopStart = 0;
 uint32_t loopTotal = 0;
-
+bool messageRecieved = false;
 
 void loop() {
   
@@ -79,6 +82,7 @@ void loop() {
 
   if (Haptics::globals.processOscCommand) { 
     // if we were sent a command over OSC
+    messageRecieved = true;
     const String response = Haptics::parseInput(Haptics::globals.commandToProcess);
     OscMessage commandResponse(COMMAND_ADDRESS);
     commandResponse.pushString(response);
@@ -95,7 +99,7 @@ void loop() {
 
   ticks += 1;
   now = millis();
-  if (now - lastWifiTick >= 7) {// Roughly 150hz
+  if (now - lastWifiTick >= 20) {// Roughly 50hz
     Haptics::Wireless::Tick();
     lastWifiTick = now;
   }
@@ -106,8 +110,10 @@ void loop() {
     Haptics::Wireless::printRawPacket();
 
     // broadcast every second until we recieve our first packet
-    if (!Haptics::globals.beenPinged) {
+    if (!messageRecieved) {
       Haptics::Wireless::Broadcast();
+    } else { // clear message recieved each second.
+      messageRecieved = false;
     }
 
     lastSerialPush = now;
