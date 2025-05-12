@@ -99,21 +99,22 @@ void loop() {
 
   ticks += 1;
   now = millis();
-  if (now - lastWifiTick >= 20) {// Roughly 50hz
+  if (now - lastWifiTick >= 7) {// Roughly 150hz
     Haptics::Wireless::Tick();
     lastWifiTick = now;
   }
 
   if (now - lastSerialPush >= 1000) {
     logger.debug("Loop/sec: %d", ticks);
-    Haptics::PwmUtils::printAllDuty();
-    Haptics::Wireless::printRawPacket();
+    logger.debug("Temp: %.2f °C", temperatureRead());
+    Haptics::Wireless::printMetrics();
+    //Haptics::PwmUtils::printAllDuty();
+    //Haptics::Wireless::printRawPacket();
 
-    // broadcast every second until we recieve our first packet
-    if (!messageRecieved) {
+    // we should recieve atleast one message over a second if we are connected/
+    // if we arent connected we should broadcast each second
+    if (now - Haptics::lastPacketMs > 1000) {
       Haptics::Wireless::Broadcast();
-    } else { // clear message recieved each second.
-      messageRecieved = false;
     }
 
     lastSerialPush = now;

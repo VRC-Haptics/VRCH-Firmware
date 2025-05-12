@@ -63,7 +63,7 @@ namespace Wireless
     void StartHeartBeat( String hostIP, uint16_t sendPort) {
         // Publish heart beat on one second intervals
         OscWiFi.publish(hostIP, sendPort, HEARTBEAT_ADDRESS) 
-            -> setFrameRate(1.);
+            -> setFrameRate(2.);
         heartbeatPublisher = OscWiFi.getPublishElementRef(hostIP, sendPort, HEARTBEAT_ADDRESS);
     
         if (!heartbeatPublisher) {
@@ -106,7 +106,12 @@ namespace Wireless
         OscWiFi.update(); // should be called to subscribe + publish osc
     }
 
-
+    /// @brief logs the usual wifi metrics to teh console.
+    void printMetrics() {
+        logger.debug("RSSI: %d dBm, Channel: %u",
+                WiFi.RSSI(),
+                WiFi.channel());
+    }
 
 } // namespace Wireless
 } // namespace Haptics

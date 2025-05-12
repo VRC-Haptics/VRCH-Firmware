@@ -29,7 +29,7 @@ namespace Haptics {
 
     // sensible defaults
     const Config defaultConfig = {
-    "SlimeServer", //ssid
+    "HapticsDevices", //ssid
     "95815480", //password
     "VRCHaptics", // name that will be displayed on the gui
     "", // Will be set via Serial or wifi.

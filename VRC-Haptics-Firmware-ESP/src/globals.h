@@ -5,6 +5,9 @@
 #include "software_defines.h"
 
 namespace Haptics {
+    extern volatile unsigned long lastPacketMs;
+    inline volatile unsigned long lastPacketMs = 0;
+
     // Volatile, non-static, user-denied variables
     struct Globals {
         uint8_t ledcMotorVals[MAX_LEDC_MOTORS];
@@ -16,6 +19,7 @@ namespace Haptics {
         bool processSerCommand;
         bool beenPinged;
         String commandToProcess;
+        bool messageRecieved;
     };
 
     inline Globals initGlobals() {
@@ -26,6 +30,7 @@ namespace Haptics {
         g.processSerCommand = false;
         g.commandToProcess = "";
         g.beenPinged = false;
+        g.messageRecieved = false;
         return g;
     }
 

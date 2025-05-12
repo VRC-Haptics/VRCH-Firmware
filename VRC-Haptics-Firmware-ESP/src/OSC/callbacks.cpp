@@ -17,6 +17,8 @@ namespace Wireless {
     /// [0, 1]              //ledc 
     ///       [2, 3, 4, 5]  //i2c
     void updateMotorVals(){
+        lastPacketMs = millis();
+
         const uint16_t totalMotors = Haptics::conf.motor_map_i2c_num+Haptics::conf.motor_map_ledc_num;
         for (uint16_t i = 0; i < totalMotors; i++) {
             if (Haptics::conf.motor_map_i2c_num && Haptics::conf.motor_map_ledc_num) { // both i2c and ledc motors
@@ -35,6 +37,8 @@ namespace Wireless {
     }
 
     void motorMessage_callback(const OscMessage& message){
+        lastPacketMs = millis();
+        
         if (first_packet){
             logger.debug("FIRST PACKET");
             first_packet = false;

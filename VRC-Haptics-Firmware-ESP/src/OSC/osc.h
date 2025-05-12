@@ -47,6 +47,7 @@ void Start(Config *conf);
 bool WiFiConnected();
 void Tick();
 void printRawPacket();
+void printMetrics();
 
 } // namespace Wireless
 } // namespace Haptics
