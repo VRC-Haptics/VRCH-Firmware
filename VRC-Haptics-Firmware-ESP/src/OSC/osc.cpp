@@ -94,9 +94,7 @@ namespace Wireless
         oscClient.send(hostIP, sendPort, pingResponse);
         logger.debug("Sending hrtbt to %s:%d", hostIP, sendPort);
     
-        if (!heartbeatPublisher){
-           StartHeartBeat(hostIP, sendPort);
-        }
+        StartHeartBeat(hostIP, sendPort);
         globals.beenPinged = true;
     
     }
