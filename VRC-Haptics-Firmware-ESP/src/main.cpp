@@ -70,7 +70,7 @@ void loop() {
     Haptics::globals.reinitLEDC = false;
   }
 
-  Haptics::LEDC::tick();
+  //Haptics::LEDC::tick();
   Haptics::PCA::setPcaDuty(&Haptics::globals, &Haptics::conf);
   Haptics::SerialComm::tick();
 
