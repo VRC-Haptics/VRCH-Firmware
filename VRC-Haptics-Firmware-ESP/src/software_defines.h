@@ -13,9 +13,9 @@
 #define PCA_1 0x40 
 #define PCA_2 0x41
 
-/// defaults from senseshift
-#define LEDC_FREQUENCY 100
-#define LEDC_RESOLUTION 8
+/// parameters to drive direct pins at
+#define LEDC_FREQUENCY 300
+#define LEDC_RESOLUTION 8 // Don't just change this. Reimplemnt the array and scaling too.
 
 /// Wireless defines
 #define OSC_MOTOR_CHAR_NUM 4

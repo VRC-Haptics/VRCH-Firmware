@@ -22,26 +22,28 @@ void IRAM_ATTR pwm_isr()
         else clrMask |= bit;
     }
 
-    GPIO.out_w1ts = setMask;     // atomic SET
-    GPIO.out_w1tc = clrMask;     // atomic CLEAR
+    REG_WRITE(GPIO_OUT_W1TS_REG, setMask);
+    REG_WRITE(GPIO_OUT_W1TC_REG, clrMask);
     /* advance PWM phase */
     if (++phase == 1 << LEDC_RESOLUTION) phase = 0;
 }
 
 int start(Config *conf) {
+    if (Haptics::conf.motor_map_ledc_num != 0) {
+        // Update pins and declare pinmodes
+        for (const auto& pin : conf->motor_map_ledc) {
+            pinMode(pin, OUTPUT);
+            digitalWrite(pin, HIGH); //Cycling this seems to get it to work, idk why, pinmode should just work
+            digitalWrite(pin, LOW);
+        }
 
-    // Update pins and declare pinmodes
-    for (const auto& pin : conf->motor_map_ledc) {
-        pinMode(pin, OUTPUT);
-        digitalWrite(pin, HIGH); //Cycling this seems to get it to work, idk why, pinmode should just work
-        digitalWrite(pin, LOW);
+        // 1 MHz hardware timer -> 39 µs alarms
+        hw_timer_t *timer = timerBegin(1, 80, true);// 80 MHz / 80 = 1 MHz
+        timerAttachInterrupt(timer, &pwm_isr, true);
+        timerAlarmWrite(timer, tockPeriod, true);   // fire every 39 µs
+        timerAlarmEnable(timer);
     }
 
-    // 1 MHz hardware timer -> 39 µs alarms
-    hw_timer_t *timer = timerBegin(3, 80, true);// 80 MHz / 80 = 1 MHz
-    timerAttachInterrupt(timer, &pwm_isr, true);
-    timerAlarmWrite(timer, tockPeriod, true);   // fire every 39 µs
-    timerAlarmEnable(timer);
     return 0;
 }
 
