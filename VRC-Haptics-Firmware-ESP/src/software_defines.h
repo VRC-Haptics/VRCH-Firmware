@@ -17,6 +17,10 @@
 #define LEDC_FREQUENCY 300
 #define LEDC_RESOLUTION 8 // Don't just change this. Reimplemnt the array and scaling too.
 
+/// Temperature controls
+#define MAX_TEMP 100.0
+#define MIN_TEMP_COOLDOWN 80.0
+
 /// Wireless defines
 #define OSC_MOTOR_CHAR_NUM 4
 #define RECIEVE_PORT 1027
