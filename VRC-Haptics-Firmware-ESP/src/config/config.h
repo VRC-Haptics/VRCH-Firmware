@@ -11,9 +11,13 @@ namespace Haptics {
 
     /// user-configurable, persistent values
     struct Config {
+        /// @brief The SSID of the WiFi network to connect to.
         char wifi_ssid[32];
+        /// @brief The password for the WiFi network.
         char wifi_password[64];
+        /// @brief The name that will be displayed in the GUI.
         char mdns_name[12];
+        /// @brief A string that maps the node numbers to their locations.
         char node_map[NODE_MAP_SIZE];
         uint8_t i2c_scl;
         uint8_t i2c_sda;
@@ -22,6 +26,11 @@ namespace Haptics {
         uint16_t motor_map_i2c[MAX_I2C_MOTORS];
         uint16_t motor_map_ledc_num;
         uint16_t motor_map_ledc[MAX_LEDC_MOTORS];
+        /// @brief Time in milliseconds that a bump will be active for.
+        uint16_t bump_time_ms;
+        /// @brief  Motor values below this threshold will activate a bump, if the previous value was zero.
+        uint16_t bump_start_threshold; 
+        /// @brief The current configuration version.
         uint16_t config_version;
     }; 
     /// To add a value, all you have to do is add it to this struct, add a default, and insert it into the configFields list
@@ -40,6 +49,8 @@ namespace Haptics {
     {0}, 
     0,
     {0},
+    0, 
+    0,
     CONFIG_VERSION
     };
 
@@ -88,6 +99,8 @@ namespace Haptics {
         CONFIG_FIELD_ARRAY(motor_map_i2c, CONFIG_TYPE_UINT16, MAX_I2C_MOTORS),
         CONFIG_FIELD(motor_map_ledc_num, CONFIG_TYPE_UINT16, 0),
         CONFIG_FIELD_ARRAY(motor_map_ledc, CONFIG_TYPE_UINT16, MAX_LEDC_MOTORS),
+        CONFIG_FIELD(bump_time_ms,  CONFIG_TYPE_UINT16, 0),
+        CONFIG_FIELD(bump_start_threshold, CONFIG_TYPE_UINT16, 0),
         CONFIG_FIELD(config_version, CONFIG_TYPE_UINT16, 0)
     };
     static const size_t configFieldsCount = sizeof(configFields) / sizeof(configFields[0]);

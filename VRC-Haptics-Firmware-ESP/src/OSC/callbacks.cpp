@@ -17,16 +17,41 @@ namespace Wireless {
     /// [0, 1]              //ledc 
     ///       [2, 3, 4, 5]  //i2c
     void updateMotorVals(){
-        lastPacketMs = millis();
+        lastPacketMs = millis();    
 
-        const uint16_t totalMotors = Haptics::conf.motor_map_i2c_num+Haptics::conf.motor_map_ledc_num;
+        const uint16_t totalMotors = Haptics::conf.motor_map_i2c_num + Haptics::conf.motor_map_ledc_num;
         for (uint16_t i = 0; i < totalMotors; i++) {
             if (Haptics::conf.motor_map_i2c_num && Haptics::conf.motor_map_ledc_num) { // both i2c and ledc motors
                 // haven't got through the ledc motors
                 if (i < Haptics::conf.motor_map_ledc_num) {
-                    Haptics::globals.ledcMotorVals[i] = Haptics::globals.allMotorVals[i] >> 8;
+                    if (Haptics::globals.bumpActivateTime[i] == 0 && Haptics::globals.allMotorVals[i] > Haptics::conf.bump_start_threshold || Haptics::globals.allMotorVals[i] == 0) {
+                        Haptics::globals.ledcMotorVals[i] = Haptics::globals.allMotorVals[i] >> 8;
+                    } else if (Haptics::globals.bumpActivateTime[i] == 0 && Haptics::globals.allMotorVals[i] < Haptics::conf.bump_start_threshold) {
+                        Haptics::globals.ledcMotorVals[i] = Haptics::conf.bump_start_threshold >> 8;
+                        Haptics::globals.bumpActivateTime[i] = esp_timer_get_time();
+                    } else {
+                        int64_t now = esp_timer_get_time();
+                        // time has expired set to desired input
+                        if (now - Haptics::globals.bumpActivateTime[i] > Haptics::conf.bump_time_ms) {
+                            Haptics::globals.bumpActivateTime[i] = 0;
+                            Haptics::globals.ledcMotorVals[i] = Haptics::globals.allMotorVals[i] >> 8;
+                        } // otherwise keep as is.
+                    }
+                    
                 } else { // past ledc
-                    Haptics::globals.pcaMotorVals[i-Haptics::conf.motor_map_ledc_num] = Haptics::globals. allMotorVals[i];
+                    if (Haptics::globals.bumpActivateTime[i] == 0 && Haptics::globals.allMotorVals[i] > Haptics::conf.bump_start_threshold || Haptics::globals.allMotorVals[i] == 0) {
+                        Haptics::globals.pcaMotorVals[i-Haptics::conf.motor_map_ledc_num] = Haptics::globals.allMotorVals[i];
+                    } else if (Haptics::globals.bumpActivateTime[i] == 0 && Haptics::globals.allMotorVals[i] < Haptics::conf.bump_start_threshold) {
+                        Haptics::globals.pcaMotorVals[i-Haptics::conf.motor_map_ledc_num] = Haptics::conf.bump_start_threshold;
+                        Haptics::globals.bumpActivateTime[i] = esp_timer_get_time();
+                    } else {
+                        int64_t now = esp_timer_get_time();
+                        // time has expired set to desired input
+                        if (now - Haptics::globals.bumpActivateTime[i] > Haptics::conf.bump_time_ms) {
+                            Haptics::globals.bumpActivateTime[i] = 0;
+                            Haptics::globals.pcaMotorVals[i-Haptics::conf.motor_map_ledc_num] = Haptics::globals.allMotorVals[i];
+                        } // otherwise keep as is.
+                    }
                 }
             } else if (Haptics::conf.motor_map_i2c_num) {// if only i2c
                 Haptics::globals.pcaMotorVals[i] = Haptics::globals.allMotorVals[i];
