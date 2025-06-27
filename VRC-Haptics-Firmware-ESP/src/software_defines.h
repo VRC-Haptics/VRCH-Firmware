@@ -18,7 +18,7 @@
 #define LEDC_RESOLUTION 8 // Don't just change this. Reimplemnt the array and scaling too.
 
 /// Temperature controls
-#define MAX_TEMP 100.0
+#define MAX_TEMP 120.0
 #define MIN_TEMP_COOLDOWN 80.0
 
 /// Wireless defines

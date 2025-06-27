@@ -50,7 +50,7 @@ namespace Conf {
     {0}, 
     0,
     {0},
-    500000, // half a second
+    10000, // 10ms (May need to be lowered.)
     20000, // ~30%
     CONFIG_VERSION
     };

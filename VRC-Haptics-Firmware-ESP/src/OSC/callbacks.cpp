@@ -19,7 +19,7 @@ namespace Haptics
 
         inline void setI2CMotor(uint16_t *index, uint16_t val)
         {
-            Haptics::globals.ledcMotorVals[*index] = val;
+            Haptics::globals.pcaMotorVals[*index] = val;
         }
 
         /// @brief  Handles when value is below threshold. Relys on externally resetting hasBumped when value touches zero.
@@ -29,12 +29,11 @@ namespace Haptics
         /// @param hasBumped Whether this index has been bumped since it last reached zero.
         void handleLedcBump(uint16_t *index, uint16_t *val, uint16_t *thresh, bool *hasBumped, const int64_t now, int64_t *timeBumpStart)
         {
-            if (hasBumped)
+            if (*hasBumped)
                 return;
-
+            
             // if bumpTime is zero, we need to initiate one
-            if (Haptics::Conf::conf.bump_time_us) {
-                logger.debug("Starting bump to: %u", thresh);
+            if (*timeBumpStart == 0) {
                 *timeBumpStart = now;
                 setLedcMotor(index, UINT16_MAX);
 
@@ -44,9 +43,8 @@ namespace Haptics
 
                 // bumpTime is elapsed
             } else {
-                logger.debug("Finished bump to: %u", val);
                 *hasBumped = true;
-                Haptics::Conf::conf.bump_start_threshold = 0;
+                *timeBumpStart = 0;
                 setLedcMotor(index, *val);
             }
         }
@@ -58,12 +56,11 @@ namespace Haptics
         /// @param hasBumped Whether this index has been bumped since it last reached zero.
         void handleI2CBump(uint16_t *index, uint16_t *val, uint16_t *thresh, bool *hasBumped, const int64_t now, int64_t *timeBumpStart)
         {
-            if (hasBumped)
+            if (*hasBumped)
                 return;
 
             // if bumpTime is zero, we need to initiate one
-            if (Haptics::Conf::conf.bump_time_us) {
-                logger.debug("Starting bump to: %u", thresh);
+            if (*timeBumpStart == 0) {
                 *timeBumpStart = now;
                 setI2CMotor(index, UINT16_MAX);
 
@@ -73,9 +70,9 @@ namespace Haptics
 
                 // bumpTime is elapsed
             } else {
-                logger.debug("Finished bump to: %u", val);
+                logger.debug("time has elapsed");
                 *hasBumped = true;
-                Haptics::Conf::conf.bump_start_threshold = 0;
+                *timeBumpStart = 0;
                 setI2CMotor(index, *val);
             }
         }
@@ -86,22 +83,22 @@ namespace Haptics
             uint16_t* thresh = &Haptics::Conf::conf.bump_start_threshold;
             bool *hasBumped = &Haptics::globals.bumpSinceZero[global_i];
 
-            if (val == 0)
+            if (*val == 0)
             {
                 *hasBumped = false;
                 setLedcMotor(&i, *val);
             }
             else if (*val > *thresh)
-            {
+            {         
                 *hasBumped = true;
                 setLedcMotor(&i, *val);
             }
-            else if (hasBumped)
+            else if (*hasBumped)
             {
                 setLedcMotor(&i, *val);
             } 
             else
-            {
+            {                
                 handleLedcBump(&i, val, thresh, hasBumped, now, startBumpTime);
             }
         }
@@ -116,7 +113,7 @@ namespace Haptics
             uint16_t* thresh = &Haptics::Conf::conf.bump_start_threshold;
             bool *hasBumped = &Haptics::globals.bumpSinceZero[global_i];
 
-            if (val == 0)
+            if (*val == 0)
             {
                 *hasBumped = false;
                 setI2CMotor(&i, *val);
@@ -126,12 +123,13 @@ namespace Haptics
                 *hasBumped = true;
                 setI2CMotor(&i, *val);
             }
-            else if (hasBumped)
+            else if (*hasBumped)
             {
                 setI2CMotor(&i, *val);
             } 
             else
             {
+                logger.debug("into bump");
                 handleI2CBump(&i, val, thresh, hasBumped, now, startBumpTime);
             }
         }
@@ -157,26 +155,14 @@ namespace Haptics
             const int64_t now = esp_timer_get_time();
             for (uint16_t i = 0; i < totalMotors; i++)
             {
-                if (Haptics::Conf::conf.motor_map_i2c_num && Haptics::Conf::conf.motor_map_ledc_num)
-                { // both i2c and ledc motors
-                    // haven't got through the ledc motors
-                    if (i < Haptics::Conf::conf.motor_map_ledc_num)
-                    {
-                        handleLEDCIndex(i, now, i);
-                    }
-                    else
-                    { // past ledc, subtract ledc to get I2C index
-                        handleI2CIndex(i - Conf::conf.motor_map_ledc_num, now, i);
-                    }
-                }
-                else if (Haptics::Conf::conf.motor_map_i2c_num)
-                { // only i2c, global index equals local index
-                    logger.debug("in i2c only. using global index %u for local index.", i);
-                    handleI2CIndex(i, now, i);
+                // take ledc values first
+                if (i < Haptics::Conf::conf.motor_map_ledc_num)
+                {
+                    handleLEDCIndex(i, now, i);
                 }
                 else
-                { // only ledc, global index equals local index
-                    handleLEDCIndex(i, now, i);
+                { // past ledc, subtract ledc to get I2C index
+                    handleI2CIndex(i - Conf::conf.motor_map_ledc_num, now, i);
                 }
             }
         }
