@@ -15,10 +15,10 @@
 namespace Haptics {
 namespace PCA {
 
-    void start(Config *conf);
+    void start(Haptics::Conf::Config *conf);
     void setPCAMotorDuty(uint8_t motorIndex, uint16_t dutyCycle);
-    void setPcaDuty(Globals *globals, Config *conf);
-    void setAllPcaDuty(uint16_t duty, Config *conf);
+    void setPcaDuty(Globals *globals, Haptics::Conf::Config *conf);
+    void setAllPcaDuty(uint16_t duty, Haptics::Conf::Config *conf);
 } // namespace PCA
 } // namespace Haptics
 

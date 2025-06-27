@@ -30,7 +30,7 @@ void setup()
 
 #ifdef DEV_MODE
 	// wait for serial if we are developing
-	delay(700);
+	delay(100);
 #endif
 
 // Initialize LittleFS
@@ -48,23 +48,12 @@ void setup()
 	}
 #endif
 
-	Haptics::loadConfig();
+	Haptics::Conf::loadConfig();
 	Haptics::initGlobals();
 
-	Haptics::Wireless::Start(&Haptics::conf);
-	Haptics::PCA::start(&Haptics::conf);
-	Haptics::LEDC::start(&Haptics::conf);
-}
-
-void coldBoot(uint64_t us_delay = 2000) // 2 ms timer by default
-{
-	/* power‑down every RTC power domain */
-	esp_sleep_pd_config(ESP_PD_DOMAIN_RTC_PERIPH, ESP_PD_OPTION_OFF);
-	esp_sleep_pd_config(ESP_PD_DOMAIN_RTC_SLOW_MEM, ESP_PD_OPTION_OFF);
-	esp_sleep_pd_config(ESP_PD_DOMAIN_RTC_FAST_MEM, ESP_PD_OPTION_OFF);
-
-	esp_sleep_enable_timer_wakeup(us_delay);
-	esp_deep_sleep_start();
+	Haptics::Wireless::Start(&Haptics::Conf::conf);
+	Haptics::PCA::start(&Haptics::Conf::conf);
+	Haptics::LEDC::start(&Haptics::Conf::conf);
 }
 
 void enterLimp()
@@ -94,7 +83,7 @@ void enterLimp()
 		}
 		else if (temp < MIN_TEMP_COOLDOWN)
 		{
-			coldBoot(); // restarts without keeping anything in memory.
+			ESP.restart();
 		}
 	}
 }
@@ -116,12 +105,12 @@ void loop()
 
 	if (Haptics::globals.reinitLEDC)
 	{ // prevents not defined error
-		Haptics::LEDC::start(&Haptics::conf);
+		Haptics::LEDC::start(&Haptics::Conf::conf);
 		logger.debug("Restarted LEDC");
 		Haptics::globals.reinitLEDC = false;
 	}
 
-	Haptics::PCA::setPcaDuty(&Haptics::globals, &Haptics::conf);
+	Haptics::PCA::setPcaDuty(&Haptics::globals, &Haptics::Conf::conf);
 	Haptics::SerialComm::tick();
 
 	// Moves heavy lifting out of ISR's
@@ -136,7 +125,7 @@ void loop()
 	{
 		// if we were sent a command over OSC
 		messageRecieved = true;
-		const String response = Haptics::parseInput(Haptics::globals.commandToProcess);
+		const String response = Haptics::Conf::Parser::parseInput(Haptics::globals.commandToProcess);
 		OscMessage commandResponse(COMMAND_ADDRESS);
 		commandResponse.pushString(response);
 		Haptics::Wireless::oscClient.send(Haptics::Wireless::hostIP, Haptics::Wireless::sendPort, commandResponse);
@@ -146,7 +135,7 @@ void loop()
 	else if (Haptics::globals.processSerCommand)
 	{
 		// If we were sent a command over serial
-		String response = Haptics::parseInput(Haptics::globals.commandToProcess);
+		String response = Haptics::Conf::Parser::parseInput(Haptics::globals.commandToProcess);
 		Serial.println(response);
 		Haptics::globals.processSerCommand = false;
 	}
@@ -176,6 +165,10 @@ void loop()
 		// if we arent connected we should broadcast each second
 		if (now - Haptics::lastPacketMs > 1000)
 		{
+			// Reset all motors to zero if we don't have a connection.
+			for (uint16_t i = 0; i < MAX_MOTORS; i++) {
+				Haptics::globals.allMotorVals[i] = 0;
+			}
 			Haptics::Wireless::Broadcast();
 		}
 

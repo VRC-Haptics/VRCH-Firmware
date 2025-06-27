@@ -9,5 +9,6 @@
 // Preferred SCL and SDA pins 0th is default scl, 1st is sda
 #define I2C_POSSIBLE_DATA 9, 8
 #define I2C_SPEEDS 4000000U, 100000U
+#define LEDC_TIMER 3
 
 #endif // DEFAULT_H

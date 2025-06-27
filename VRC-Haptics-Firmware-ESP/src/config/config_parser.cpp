@@ -4,7 +4,10 @@
 #include "logging///logger.h"
 
 namespace Haptics {
+namespace Conf {
+namespace Parser {
 
+    Haptics::Logging::Logger logger("Config Parser");
 
     // Helper: Given a pointer to conf and a descriptor, return a pointer to the field.
     inline void* getFieldPtr(const ConfigFieldDescriptor& desc) {
@@ -87,6 +90,10 @@ namespace Haptics {
                                 break;
                             case CONFIG_TYPE_FLOAT:
                                 *(float*)ptr = doc[field.name].as<float>();
+                                //logger.debug("%s set to %f", field.name, *(float*)ptr);
+                                break;
+                            case CONFIG_TYPE_INT64:
+                                *(int64_t*)ptr = doc[field.name].as<int64_t>();
                                 //logger.debug("%s set to %f", field.name, *(float*)ptr);
                                 break;
                             case CONFIG_TYPE_ARRAY: {
@@ -188,6 +195,10 @@ namespace Haptics {
             case CONFIG_TYPE_ARRAY:
                 success = setArrayFieldValue(ptr, *field, value);
                 break;
+            case CONFIG_TYPE_INT64:
+                *(int64_t*)ptr = (int64_t)value.toInt();
+                success = true;
+                break;
             default:
                 break;
         }
@@ -230,6 +241,9 @@ namespace Haptics {
                     case CONFIG_TYPE_FLOAT:
                         fieldVal = String(*(float*)ptr);
                         break;
+                    case CONFIG_TYPE_INT64: 
+                        fieldVal = String(*(int64_t*)ptr);
+                        break;
                     case CONFIG_TYPE_ARRAY:
                         fieldVal = getArrayFieldValue(ptr, field);
                         // Only wrap array elements in quotes if the array's subtype is string.
@@ -253,6 +267,7 @@ namespace Haptics {
         }
 
         // Otherwise, locate the descriptor for the given key.
+        logger.debug("This that: %s", key);
         const ConfigFieldDescriptor* field = getConfigFieldDescriptor(key);
         if (!field) {
             return "Error: Unknown config key " + key;
@@ -280,6 +295,8 @@ namespace Haptics {
                 }
                 return result;
             }
+            case CONFIG_TYPE_INT64:
+                return String(*(int64_t*)ptr);
             default:
                 return "Error: Unsupported type";
         }
@@ -310,6 +327,11 @@ namespace Haptics {
                 }
                 case CONFIG_TYPE_FLOAT: {
                     float* arr = (float*)ptr;
+                    result += String(arr[j]);
+                    break;
+                }
+                case CONFIG_TYPE_INT64: {
+                    int64_t* arr = (int64_t*)ptr;
                     result += String(arr[j]);
                     break;
                 }
@@ -417,11 +439,14 @@ namespace Haptics {
             saveConfig();
         } else if (command == "GET") {
             feedback = handleGet(key, value);
+        } else if (command == "REBOOT") {
+            ESP.restart();
         } else {
             feedback = "Unknown command: "+ input;
         }
 
         return feedback;
     }
-
+} /// Parser
+}
 }

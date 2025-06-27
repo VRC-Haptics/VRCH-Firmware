@@ -16,8 +16,8 @@ void IRAM_ATTR pwm_isr()
     uint32_t setMask = 0;   // pins to drive HIGH this sub‑cycle
     uint32_t clrMask = 0;   // pins to drive LOW  this sub‑cycle
 
-    for (int motor = 0; motor < Haptics::conf.motor_map_ledc_num; ++motor) {
-        uint32_t bit = 1UL << Haptics::conf.motor_map_ledc[motor];
+    for (int motor = 0; motor < Haptics::Conf::conf.motor_map_ledc_num; ++motor) {
+        uint32_t bit = 1UL << Haptics::Conf::conf.motor_map_ledc[motor];
         if (Haptics::globals.ledcMotorVals[motor] > phase) setMask |= bit;
         else clrMask |= bit;
     }
@@ -28,8 +28,8 @@ void IRAM_ATTR pwm_isr()
     if (++phase == 1 << LEDC_RESOLUTION) phase = 0;
 }
 
-int start(Config *conf) {
-    if (Haptics::conf.motor_map_ledc_num != 0) {
+int start(Haptics::Conf::Config *conf) {
+    if (Haptics::Conf::conf.motor_map_ledc_num != 0) {
         // Update pins and declare pinmodes
         for (const auto& pin : conf->motor_map_ledc) {
             pinMode(pin, OUTPUT);
@@ -38,7 +38,7 @@ int start(Config *conf) {
         }
 
         // 1 MHz hardware timer -> 39 µs alarms
-        hw_timer_t *timer = timerBegin(1, 80, true);// 80 MHz / 80 = 1 MHz
+        hw_timer_t *timer = timerBegin(LEDC_TIMER, 80, true);// 80 MHz / 80 = 1 MHz
         timerAttachInterrupt(timer, &pwm_isr, true);
         timerAlarmWrite(timer, tockPeriod, true);   // fire every 39 µs
         timerAlarmEnable(timer);

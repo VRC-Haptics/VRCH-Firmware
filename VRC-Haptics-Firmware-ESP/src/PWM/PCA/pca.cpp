@@ -13,7 +13,7 @@ uint16_t debounceBuffer[MAX_I2C_MOTORS+1];
 Logging::Logger logger("I2C");
 
 /// @brief Start pca module communication
-void start(Config *conf) {
+void start(Haptics::Conf::Config *conf) {
   Wire.begin(conf->i2c_sda, conf->i2c_scl, conf->i2c_speed);
 
   // init modules
@@ -60,7 +60,7 @@ void start(Config *conf) {
 }
 
 /// @brief Sets PCA motors to the values from the global variables
-void setPcaDuty(Globals *globals, Config *conf) {
+void setPcaDuty(Globals *globals, Haptics::Conf::Config *conf) {
     for(uint8_t i = 0; i < 16; i++) {
         const uint16_t value = globals->pcaMotorVals[i];
         const uint16_t value2 = globals->pcaMotorVals[i+16];
@@ -77,7 +77,7 @@ void setPcaDuty(Globals *globals, Config *conf) {
 
 /// @brief Sets all motors to the specified duty cycle, mapped to the PCA_MAP defined in config.h
 /// @param dutyCycle The list of each motors duty cycle
-void setAllPcaDuty(uint16_t duty, Config *conf) {
+void setAllPcaDuty(uint16_t duty, Haptics::Conf::Config *conf) {
   for(uint8_t i = 0; i < conf->motor_map_i2c_num; i++) {
     setPCAMotorDuty(i, duty);
   }

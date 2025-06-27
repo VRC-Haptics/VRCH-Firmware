@@ -7,8 +7,8 @@
 #include "logging/Logger.h"
 
 namespace Haptics {
-
-    Logging::Logger logger("Haptics");
+namespace Conf {
+    Logging::Logger logger("Config");
 
     void loadConfig() {
         // Check if the config file exists.
@@ -77,6 +77,10 @@ namespace Haptics {
                         }
                         break;
                     }
+                    case CONFIG_TYPE_INT64: {
+                        *((int64_t*)confFieldPtr) = doc[field.name] | *((int64_t*)(((uint8_t*)&defaultConfig) + field.offset));
+                        break;
+                    }
                     default:
                         logger.error("Unsupported config field type for field:");
                         logger.error(field.name);
@@ -138,6 +142,10 @@ namespace Haptics {
                     doc[field.name] = *((float*)confFieldPtr);
                     break;
                 }
+                case CONFIG_TYPE_INT64: {
+                    doc[field.name] = *((int64_t*)confFieldPtr);
+                    break;
+                }
                 case CONFIG_TYPE_ARRAY: {
                     // For array fields, we create a nested JSON array.
                     JsonArray arr = doc.createNestedArray(field.name);
@@ -166,4 +174,5 @@ namespace Haptics {
             logger.error("Failed to open config file for writing.");
         }
     }
+} // namespace Config
 } // namespace Haptics

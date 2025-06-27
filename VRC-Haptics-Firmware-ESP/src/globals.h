@@ -13,7 +13,10 @@ namespace Haptics {
         uint8_t ledcMotorVals[MAX_LEDC_MOTORS];
         uint16_t pcaMotorVals[MAX_I2C_MOTORS];
         uint16_t allMotorVals[MAX_MOTORS];
-        int64_t bumpActivateTime[MAX_MOTORS]; // Duration bump has been active
+        // Duration bump has been active
+        int64_t bumpActivateTime[MAX_MOTORS];
+        // whether bump has been triggered since value was last zero.
+        bool bumpSinceZero[MAX_MOTORS];
         bool updatedMotors;
         bool reinitLEDC;
         bool processOscCommand; // moves the heavy commands out of ISR time

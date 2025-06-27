@@ -5,6 +5,7 @@
 
 #include "globals.h"
 #include "software_defines.h"
+#include "board_defines.h"
 #include "logging/Logger.h"
 #include "config/config.h"
 
@@ -14,7 +15,7 @@ namespace LEDC {
     void tick();
     inline int setChannel(const uint8_t channel, const uint16_t duty);
     int setAllTo(const uint16_t duty);
-    int start(Config *conf);
+    int start(Haptics::Conf::Config *conf);
 } // namespace LEDC
 } // namespace Haptics
 

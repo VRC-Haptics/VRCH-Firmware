@@ -43,7 +43,7 @@ void StartHeartBeat( String hostIP, uint16_t sendPort);
 void handlePing(const OscMessage& message);
 
 void Broadcast();
-void Start(Config *conf);
+void Start(Haptics::Conf::Config *conf);
 bool WiFiConnected();
 void Tick();
 void printRawPacket();

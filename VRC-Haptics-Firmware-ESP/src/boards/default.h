@@ -9,5 +9,7 @@
 #define I2C_POSSIBLE_DATA 9, 8
 // Keep prefered speed at front
 #define I2C_SPEEDS 4000000U, 100000U
+/// which timer to use for the ledc channel.
+#define LEDC_TIMER 3
 
 #endif // DEFAULT_H

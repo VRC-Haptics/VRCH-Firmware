@@ -8,6 +8,7 @@
 static const u_int NODE_MAP_SIZE = (MAX_MOTORS * ((NODE_LOCATION_DIGITS*3) + 3)) * 2;
 
 namespace Haptics {
+namespace Conf {
 
     /// user-configurable, persistent values
     struct Config {
@@ -26,8 +27,8 @@ namespace Haptics {
         uint16_t motor_map_i2c[MAX_I2C_MOTORS];
         uint16_t motor_map_ledc_num;
         uint16_t motor_map_ledc[MAX_LEDC_MOTORS];
-        /// @brief Time in milliseconds that a bump will be active for.
-        uint16_t bump_time_ms;
+        /// @brief Time in microseconds that a bump will be active for.
+        int64_t bump_time_us;
         /// @brief  Motor values below this threshold will activate a bump, if the previous value was zero.
         uint16_t bump_start_threshold; 
         /// @brief The current configuration version.
@@ -49,8 +50,8 @@ namespace Haptics {
     {0}, 
     0,
     {0},
-    0, 
-    0,
+    500000, // half a second
+    20000, // ~30%
     CONFIG_VERSION
     };
 
@@ -69,6 +70,7 @@ namespace Haptics {
         CONFIG_TYPE_FLOAT,
         CONFIG_TYPE_STRING,
         CONFIG_TYPE_ARRAY,
+        CONFIG_TYPE_INT64,
     };
 
     // A descriptor for each configuration field.
@@ -99,7 +101,7 @@ namespace Haptics {
         CONFIG_FIELD_ARRAY(motor_map_i2c, CONFIG_TYPE_UINT16, MAX_I2C_MOTORS),
         CONFIG_FIELD(motor_map_ledc_num, CONFIG_TYPE_UINT16, 0),
         CONFIG_FIELD_ARRAY(motor_map_ledc, CONFIG_TYPE_UINT16, MAX_LEDC_MOTORS),
-        CONFIG_FIELD(bump_time_ms,  CONFIG_TYPE_UINT16, 0),
+        CONFIG_FIELD(bump_time_us,  CONFIG_TYPE_INT64, 0),
         CONFIG_FIELD(bump_start_threshold, CONFIG_TYPE_UINT16, 0),
         CONFIG_FIELD(config_version, CONFIG_TYPE_UINT16, 0)
     };
@@ -114,7 +116,7 @@ namespace Haptics {
         }
         return nullptr;
     }
-
+}
 } // namespace Haptics
 
 #endif // CONFIG_H

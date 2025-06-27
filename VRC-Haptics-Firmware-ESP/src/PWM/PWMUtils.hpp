@@ -8,7 +8,7 @@ namespace PwmUtils {
     Logging::Logger logger("Utils");
 
     void printMotorDuty() {
-        const uint16_t totalMotors = conf.motor_map_i2c_num+conf.motor_map_ledc_num;
+        const uint16_t totalMotors = Haptics::Conf::conf.motor_map_i2c_num+ Haptics::Conf::conf.motor_map_ledc_num;
         if (!totalMotors) {
             logger.debug("No configured motors");
             return;
@@ -17,17 +17,17 @@ namespace PwmUtils {
     }
 
     void printPCADuty() {
-        if (!conf.motor_map_i2c_num) {
+        if (! Haptics::Conf::conf.motor_map_i2c_num) {
             return;
         }
 
-        logger.debugArray("I2C Duty: ", globals.pcaMotorVals, conf.motor_map_i2c_num);
+        logger.debugArray("I2C Duty: ", globals.pcaMotorVals,  Haptics::Conf::conf.motor_map_i2c_num);
     }
 
     void printLEDCDuty() {
-        if (!Haptics::conf.motor_map_ledc_num) return;
+        if (!Haptics::Conf::conf.motor_map_ledc_num) return;
 
-        logger.debugArray("LEDC Duty: ", globals.ledcMotorVals, conf.motor_map_ledc_num);
+        logger.debugArray("LEDC Duty: ", globals.ledcMotorVals,  Haptics::Conf::conf.motor_map_ledc_num);
     }
 
 
