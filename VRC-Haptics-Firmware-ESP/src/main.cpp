@@ -11,8 +11,8 @@
 #include "logging/Logger.h"
 
 // import modules
-#include "OSC/osc.h"
-#include "OSC/callbacks.h"
+#include "wifi/osc.h"
+#include "wifi/callbacks.h"
 #include "PWM/PCA/pca.h"
 #include "PWM/LEDC/ledc.h"
 #include "serial/serial.h"
@@ -65,7 +65,7 @@ void enterLimp()
 	esp_bt_controller_disable(); // BT off
 
 	// throttle
-	setCpuFrequencyMhz(20);
+	setCpuFrequencyMhz(80);
 
 	// enter sleep mode
 	esp_light_sleep_start();
@@ -73,6 +73,7 @@ void enterLimp()
 	// wait until cool
 	while (true)
 	{
+		delay(1000);
 		float temp = temperatureRead();
 
 		// if temp isn't going down put into deep-sleep

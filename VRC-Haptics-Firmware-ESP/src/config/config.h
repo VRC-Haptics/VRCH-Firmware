@@ -16,6 +16,8 @@ namespace Conf {
         char wifi_ssid[32];
         /// @brief The password for the WiFi network.
         char wifi_password[64];
+        /// @brief Transmit power for the preffered radio method HIGH = 2, Medium=1, Low=0.
+        uint8_t transmit_power;
         /// @brief The name that will be displayed in the GUI.
         char mdns_name[12];
         /// @brief A string that maps the node numbers to their locations.
@@ -41,6 +43,7 @@ namespace Conf {
     const Config defaultConfig = {
     "HapticsDevices", //ssid
     "95815480", //password
+    2, // highest transmit power
     "VRCHaptics", // name that will be displayed on the gui
     "", // Will be set via Serial or wifi.
     SCL, // scl default of board
@@ -92,6 +95,7 @@ namespace Conf {
     static const ConfigFieldDescriptor configFields[] = {
         CONFIG_FIELD(wifi_ssid,     CONFIG_TYPE_STRING, sizeof(((Config*)0)->wifi_ssid)),
         CONFIG_FIELD(wifi_password, CONFIG_TYPE_STRING, sizeof(((Config*)0)->wifi_password)),
+        CONFIG_FIELD(transmit_power,CONFIG_TYPE_UINT8,  0),
         CONFIG_FIELD(mdns_name,     CONFIG_TYPE_STRING, sizeof(((Config*)0)->mdns_name)),
         CONFIG_FIELD(node_map,      CONFIG_TYPE_STRING, sizeof(((Config*)0)->node_map)),
         CONFIG_FIELD(i2c_scl,       CONFIG_TYPE_UINT8,  0),

@@ -4,7 +4,7 @@
 #include "logging/Logger.h" // For logger calls
 #include "board_defines.h"  // Provides board-specific defines
 #include "PWM/LEDC/ledc.h"
-#include "OSC/callbacks.h"
+#include "wifi/callbacks.h"
 #include <Arduino.h>
 
 // Helper function to trim leading/trailing whitespace from a String.
@@ -35,6 +35,7 @@ namespace Haptics {
       
         Haptics::globals.commandToProcess = input;
         Haptics::globals.processSerCommand = true;
+        logger.debug("New input: ", input);
       }
     }
 

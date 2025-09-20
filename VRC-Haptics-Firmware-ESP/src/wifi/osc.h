@@ -15,7 +15,7 @@
 #include "globals.h"
 #include "config/config.h"
 #include "logging/Logger.h"
-#include "OSC/callbacks.h"
+#include "wifi/callbacks.h"
 
 #ifndef OSC_H
 #define OSC_H

@@ -14,7 +14,7 @@
 #define PCA_2 0x41
 
 /// parameters to drive direct pins at
-#define LEDC_FREQUENCY 300
+#define LEDC_FREQUENCY 200
 #define LEDC_RESOLUTION 8 // Don't just change this. Reimplemnt the array and scaling too.
 
 /// Temperature controls
@@ -24,8 +24,9 @@
 /// Wireless defines
 #define OSC_MOTOR_CHAR_NUM 4
 #define RECIEVE_PORT 1027
-#define MULTICAST_PORT 8888
+#define MULTICAST_PORT 6868
 #define MULTICAST_GROUP 239,0,0,1
+#define AP_NAME "Haptics-Connect-To-Me"
 
 #define HEARTBEAT_ADDRESS "/hrtbt"
 #define PING_ADDRESS "/ping"

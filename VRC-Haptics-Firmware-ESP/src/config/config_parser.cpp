@@ -439,7 +439,7 @@ namespace Parser {
             saveConfig();
         } else if (command == "GET") {
             feedback = handleGet(key, value);
-        } else if (command == "REBOOT") {
+        } else if (command == "REBOOT" || command == "RESTART") {
             ESP.restart();
         } else {
             feedback = "Unknown command: "+ input;
