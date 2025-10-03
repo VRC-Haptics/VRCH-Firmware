@@ -1,7 +1,11 @@
 #include <Arduino.h>
 #include "Wire.h"
 #include "LittleFS.h"
+#if defined(ESP8266)
+#include <ESP8266WiFi.h>
+#else
 #include <esp_wifi.h>
+#endif
 #include <esp_bt.h>
 
 // main config files
@@ -153,7 +157,7 @@ void loop()
 	{
 		logger.debug("Loop/sec: %d", ticks);
 		Haptics::Wireless::printMetrics();
-		// Haptics::PwmUtils::printAllDuty();
+		Haptics::PwmUtils::printAllDuty();
 
 		float temp = temperatureRead();
 		logger.debug("Temp: %.2f °C", temp);
