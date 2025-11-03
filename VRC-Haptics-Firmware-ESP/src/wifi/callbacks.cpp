@@ -152,7 +152,12 @@ namespace Haptics
 
             const uint16_t totalMotors = Haptics::Conf::conf.motor_map_i2c_num + Haptics::Conf::conf.motor_map_ledc_num;
             const int64_t bumpTime = Haptics::Conf::conf.bump_time_us;
-            const int64_t now = esp_timer_get_time();
+            // Get microsecond timestamp for both platforms
+#if defined(ESP8266)
+            const int64_t now = system_get_time(); // ESP8266 microseconds
+#else
+            const int64_t now = esp_timer_get_time(); // ESP32 microseconds
+#endif
             for (uint16_t i = 0; i < totalMotors; i++)
             {
                 // take ledc values first

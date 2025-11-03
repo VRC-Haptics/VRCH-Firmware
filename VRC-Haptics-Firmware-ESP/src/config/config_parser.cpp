@@ -425,6 +425,16 @@ namespace Parser {
         return (count > 0);
     }
 
+    void getPlatform(String &out) {
+        #ifdef ESP32
+            out = ESP.getChipModel();  // Returns "ESP32", "ESP32-S3", etc.
+        #elif defined(ESP8266)
+            out = "ESP8266";  // ESP8266 doesn't have getChipModel()
+        #else
+            out = "Unknown";
+        #endif
+    }
+
     /// @brief Parses input and manages the configuration accordingly
     /// @param input the input string to be processed for a command
     /// @return The return message
@@ -438,6 +448,9 @@ namespace Parser {
             feedback = handleSet(key, value);
             saveConfig();
         } else if (command == "GET") {
+            if (key.equalsIgnoreCase("PLATFORM")) {
+                getPlatform(feedback);
+            }
             feedback = handleGet(key, value);
         } else if (command == "REBOOT" || command == "RESTART") {
             ESP.restart();

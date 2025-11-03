@@ -3,10 +3,11 @@
 #include "LittleFS.h"
 #if defined(ESP8266)
 #include <ESP8266WiFi.h>
+// ESP8266 doesn't have Bluetooth
 #else
 #include <esp_wifi.h>
-#endif
 #include <esp_bt.h>
+#endif
 
 // main config files
 #include "globals.h"
@@ -65,19 +66,31 @@ void enterLimp()
 	logger.warn("Thermal limit reached, entering limp mode");
 
 	// kill radios
+#if defined(ESP8266)
+	WiFi.mode(WIFI_OFF);  // ESP8266 Wi-Fi off
+	// ESP8266 doesn't have Bluetooth
+	system_update_cpu_freq(80);  // ESP8266 throttle to 80MHz
+	// ESP8266 sleep mode
+	wifi_set_sleep_type(LIGHT_SLEEP_T);
+#else
 	esp_wifi_stop();			 // Wi‑Fi off
 	esp_bt_controller_disable(); // BT off
-
-	// throttle
-	setCpuFrequencyMhz(80);
-
-	// enter sleep mode
-	esp_light_sleep_start();
+	setCpuFrequencyMhz(80);      // throttle
+	esp_light_sleep_start();     // enter sleep mode
+#endif
 
 	// wait until cool
 	while (true)
 	{
 		delay(1000);
+#if defined(ESP8266)
+		// ESP8266 doesn't have built-in temperature sensor
+		// Use a simple timeout instead of temperature monitoring
+		static unsigned long limpStartTime = millis();
+		if (millis() - limpStartTime > 60000) { // Cool down for 60 seconds
+			ESP.restart();
+		}
+#else
 		float temp = temperatureRead();
 
 		// if temp isn't going down put into deep-sleep
@@ -90,6 +103,7 @@ void enterLimp()
 		{
 			ESP.restart();
 		}
+#endif
 	}
 }
 
@@ -123,6 +137,9 @@ void loop()
 	{
 		Haptics::globals.updatedMotors = false;
 		Haptics::Wireless::updateMotorVals();
+#ifdef ESP8266
+		Haptics::LEDC::tick(); // Update ESP8266 PWM values
+#endif
 	}
 
 	// Handle commands (like changing the config, not setting motor values.)
@@ -142,6 +159,7 @@ void loop()
 		// If we were sent a command over serial
 		String response = Haptics::Conf::Parser::parseInput(Haptics::globals.commandToProcess);
 		Serial.println(response);
+		Haptics::globals.commandToProcess = "";
 		Haptics::globals.processSerCommand = false;
 	}
 
@@ -159,12 +177,15 @@ void loop()
 		Haptics::Wireless::printMetrics();
 		Haptics::PwmUtils::printAllDuty();
 
+#if !defined(ESP8266)
+		// ESP32 has temperature sensor
 		float temp = temperatureRead();
 		logger.debug("Temp: %.2f °C", temp);
 		if (temp >= MAX_TEMP)
 		{
 			enterLimp();
 		}
+#endif
 
 		// we should recieve atleast one message over a second if we are connected/
 		// if we arent connected we should broadcast each second

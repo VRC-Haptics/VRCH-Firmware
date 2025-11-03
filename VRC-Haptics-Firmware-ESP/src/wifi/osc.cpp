@@ -38,16 +38,31 @@ namespace Haptics
             switch (conf->transmit_power)
             {
             case 0:
+#if defined(ESP8266)
+                WiFi.setOutputPower(8.5);  // ESP8266 power setting
+                logger.trace("Wi-Fi Power: LOW (8.5 dBm)");
+#else
                 WiFi.setTxPower(WIFI_POWER_8_5dBm);
                 logger.trace("Wi-Fi Power: LOW (8.5 dBm)");
+#endif
                 break;
             case 1:
+#if defined(ESP8266)
+                WiFi.setOutputPower(15);   // ESP8266 power setting
+                logger.trace("Wi-Fi Power: MEDIUM (15 dBm)");
+#else
                 WiFi.setTxPower(WIFI_POWER_15dBm);
                 logger.trace("Wi-Fi Power: MEDIUM (15 dBm)");
+#endif
                 break;
             case 2:
+#if defined(ESP8266)
+                WiFi.setOutputPower(20.5); // ESP8266 max power
+                logger.trace("Wi-Fi Power: HIGH (20.5 dBm)");
+#else
                 WiFi.setTxPower(WIFI_POWER_19_5dBm);
                 logger.trace("Wi-Fi Power: HIGH (19.5 dBm)");
+#endif
                 break;
             }
 
@@ -70,7 +85,12 @@ namespace Haptics
             broadcastMessage += "\"port\":" + String(recvPort);
             broadcastMessage += "}";
 
+            // ESP8266 beginMulticast requires interface address
+#if defined(ESP8266)
+            udpClient.beginMulticast(WiFi.localIP(), IPAddress(MULTICAST_GROUP), MULTICAST_PORT);
+#else
             udpClient.beginMulticast(IPAddress(MULTICAST_GROUP), MULTICAST_PORT);
+#endif
             Broadcast(); // broadcast first time
         }
 
