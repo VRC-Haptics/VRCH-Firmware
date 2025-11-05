@@ -9,6 +9,8 @@
 #include <esp_bt.h>
 #endif
 
+#include "ota.h"
+
 // main config files
 #include "globals.h"
 #include "config/config.h"
@@ -57,6 +59,7 @@ void setup()
 	Haptics::initGlobals();
 
 	Haptics::Wireless::Start(&Haptics::Conf::conf);
+	OTA::otaSetup(OTA_PASS);
 	Haptics::PCA::start(&Haptics::Conf::conf);
 	Haptics::LEDC::start(&Haptics::Conf::conf);
 }
@@ -111,6 +114,7 @@ uint32_t ticks = 0;
 time_t now = 0;
 time_t lastSerialPush = millis();
 time_t lastWifiTick = millis();
+time_t lastOtaTick = millis();
 
 // Profiler setup
 #define TIMER_START uint32_t dwStart = ESP.getCycleCount();
@@ -121,6 +125,10 @@ bool messageRecieved = false;
 
 void loop()
 {
+	if (now - lastOtaTick >= OTA_UPDATE_MS) {
+		OTA::otaUpdate();
+		lastOtaTick = millis();
+	}
 
 	if (Haptics::globals.reinitLEDC)
 	{ // prevents not defined error
@@ -137,9 +145,7 @@ void loop()
 	{
 		Haptics::globals.updatedMotors = false;
 		Haptics::Wireless::updateMotorVals();
-#ifdef ESP8266
-		Haptics::LEDC::tick(); // Update ESP8266 PWM values
-#endif
+		Haptics::LEDC::tick(); // only does smth on ESP32 platform
 	}
 
 	// Handle commands (like changing the config, not setting motor values.)

@@ -12,7 +12,7 @@ const unsigned long tockPeriod = tickPeriod / (1 << LEDC_RESOLUTION); // microse
 volatile uint8_t phase = 0;
 
 #ifdef ESP8266
-// ESP8266 uses built-in analogWrite() for PWM - much simpler and more reliable
+// ESP8266 uses built-in analogWrite()
 // No need for custom ISR implementation
 
 void updateESP8266PWM() {
@@ -115,10 +115,7 @@ int setAllTo(const uint16_t duty) {
 }
 
 #else
-void tick() {
-    // ESP32 version - PWM is handled by hardware timer ISR
-    // No action needed in tick
-}
+inline void tick(); // esp32's have timer shenanigans
 
 inline int setChannel(const uint8_t channel, const uint16_t duty) {
     if (channel >= Haptics::Conf::conf.motor_map_ledc_num) {

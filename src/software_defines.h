@@ -27,6 +27,11 @@
 #define MULTICAST_PORT 6868
 #define MULTICAST_GROUP 239,0,0,1
 #define AP_NAME "Haptics-Connect-To-Me"
+#define OTA_PASS "Haptics-OTA"
+/// Whether OTA should be disabled 1minute after boot or not.
+#define OTA_TIMEOUT true
+
+#define OTA_UPDATE_MS 1000
 
 #define HEARTBEAT_ADDRESS "/hrtbt"
 #define PING_ADDRESS "/ping"
