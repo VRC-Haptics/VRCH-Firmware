@@ -34,11 +34,11 @@ jobs: # Based off WLED Build scripts: https://github.com/wled/WLED/blob/b60313e1
         environment: ${{ fromJSON(needs.get_default_envs.outputs.environments) }}
     steps:
     - uses: actions/checkout@v4
-    - name: Set up Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version-file: '.nvmrc'
-        cache: 'npm'
+    #- name: Set up Node.js
+    #  uses: actions/setup-node@v4
+    #  with:
+    #    node-version-file: '.nvmrc'
+    #    cache: 'npm'
     #- run: | sets version string
     #    npm ci
     #    VERSION=`date +%y%m%d0`
