@@ -42,15 +42,7 @@ jobs: # Based off WLED Build scripts: https://github.com/wled/WLED/blob/b60313e1
         environment: ${{ fromJSON(needs.get_default_envs.outputs.environments) }}
     steps:
     - uses: actions/checkout@v4
-    #- name: Set up Node.js
-    #  uses: actions/setup-node@v4
-    #  with:
-    #    node-version-file: '.nvmrc'
-    #    cache: 'npm'
-    #- run: | sets version string
-    #    npm ci
-    #    VERSION=`date +%y%m%d0`
-    #    sed -i -r -e "s/define VERSION .+/define VERSION $VERSION/" wled00/wled.h
+
     - name: Cache PlatformIO
       uses: actions/cache@v4
       with:
@@ -60,16 +52,31 @@ jobs: # Based off WLED Build scripts: https://github.com/wled/WLED/blob/b60313e1
               build_output
         key: pio-${{ runner.os }}-${{ matrix.environment }}-${{ hashFiles('platformio.ini', 'pio-scripts/output_bins.py') }}-${{ hashFiles('wled00/**', 'usermods/**') }}
         restore-keys: pio-${{ runner.os }}-${{ matrix.environment }}-${{ hashFiles('platformio.ini', 'pio-scripts/output_bins.py') }}-
+          
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
           python-version: '3.12'
           cache: 'pip'
+
     - name: Install PlatformIO
       run: pip install -r requirements.txt
 
     - name: Build firmware
       run: pio run -e ${{ matrix.environment }}
+
+    - name: Prepare firmware files
+      run: |
+        mkdir -p build_output/release
+        cp .pio/build/${{ matrix.environment }}/firmware.bin build_output/release/haptics_${{ matrix.environment }}.bin
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: firmware-${{ matrix.environment }}
+        path: |
+          build_output/release/*.bin
+          build_output/release/*_ESP02*.bin.gz
+          
     - uses: actions/upload-artifact@v4
       with:
         name: firmware-${{ matrix.environment }}
