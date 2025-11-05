@@ -8,7 +8,7 @@ on:
       - 'release/*'
     tags:
       - '*'
-  workflow_call:                     # <-- added manual trigger
+  workflow_dispatch:                     # <-- added manual trigger
     inputs:
       version:
         description: 'Version tag to use (e.g., v1.2.3). If empty, the pushed tag is used.'

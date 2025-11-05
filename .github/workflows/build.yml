@@ -2,6 +2,7 @@ name: Firmware Build
 
 # Only included into other workflows
 on:
+  workflow_dispatch:
   workflow_call:
 
 jobs: # Based off WLED Build scripts: https://github.com/wled/WLED/blob/b60313e1f884e129197a7e08d8c669593fae01d3/.github/workflows/build.yml
