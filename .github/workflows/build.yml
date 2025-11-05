@@ -16,7 +16,7 @@ jobs: # Based off WLED Build scripts: https://github.com/wled/WLED/blob/b60313e1
         python-version: '3.12'
         cache: 'pip'
     - name: Install PlatformIO
-      run: pip install platformio==6.1.17
+      run: pip install -r requirements.txt
     - name: Get default environments
       id: envs
       run: |
