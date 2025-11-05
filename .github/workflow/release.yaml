@@ -8,6 +8,12 @@ on:
       - 'release/*'
     tags:
       - '*'
+    workflow_dispatch:                     # <-- added manual trigger
+      inputs:
+        version:
+          description: 'Version tag to use (e.g., v1.2.3). If empty, the pushed tag is used.'
+          required: false
+          default: ''
 
 jobs:
   
@@ -17,7 +23,7 @@ jobs:
   release:
     name: Create Release
     runs-on: ubuntu-latest
-    needs: firmware_build
+    needs: fw_build
     steps:
     - uses: actions/download-artifact@v4
       with:
@@ -36,6 +42,7 @@ jobs:
       with:
         body: ${{ steps.changelog.outputs.changelog }}
         draft: True
+        tag_name: ${{ github.event.inputs.version != '' && github.event.inputs.version || github.ref_name }}
         files: |
           *.bin
           *.bin.gz
