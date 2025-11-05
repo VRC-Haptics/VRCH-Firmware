@@ -8,12 +8,13 @@ on:
       - 'release/*'
     tags:
       - '*'
-    workflow_dispatch:                     # <-- added manual trigger
-      inputs:
-        version:
-          description: 'Version tag to use (e.g., v1.2.3). If empty, the pushed tag is used.'
-          required: false
-          default: ''
+  workflow_call:                     # <-- added manual trigger
+    inputs:
+      version:
+        description: 'Version tag to use (e.g., v1.2.3). If empty, the pushed tag is used.'
+        required: false
+        default: ''
+        type: string
 
 jobs:
   
@@ -32,11 +33,11 @@ jobs:
       id: changelog
       uses: janheinrichmerker/action-github-changelog-generator@v2.3
       with:
-          token: ${{ secrets.GITHUB_TOKEN }} 
-          sinceTag: v0.15.0
-          maxIssues: 500
-          # Exclude issues that were closed without resolution from changelog
-          exclude-labels: 'stale,wontfix,duplicate,invalid'       
+        token: ${{ secrets.GITHUB_TOKEN }} 
+        sinceTag: v0.15.0
+        maxIssues: 500
+        # Exclude issues that were closed without resolution from changelog
+        excludeLabels: 'stale,wontfix,duplicate,invalid'       
     - name: Create draft release
       uses: softprops/action-gh-release@v1
       with:
