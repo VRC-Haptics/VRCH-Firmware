@@ -1,7 +1,7 @@
 #include "config_parser.h"
 #include "config.h"
 #include <ArduinoJson.h>
-#include "logging/logger.h"
+#include "logging\logger.h"
 
 namespace Haptics {
 namespace Conf {
