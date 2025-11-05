@@ -450,6 +450,7 @@ namespace Parser {
         } else if (command == "GET") {
             if (key.equalsIgnoreCase("PLATFORM")) {
                 getPlatform(feedback);
+                return feedback;
             }
             feedback = handleGet(key, value);
         } else if (command == "REBOOT" || command == "RESTART") {
