@@ -20,7 +20,15 @@ jobs: # Based off WLED Build scripts: https://github.com/wled/WLED/blob/b60313e1
     - name: Get default environments
       id: envs
       run: |
-        echo "environments=$(pio project config --json-output | jq -cr '.[0][1][0][1]')" >> $GITHUB_OUTPUT
+        python - <<'PY' > /tmp/envs.json
+        import configparser, json
+        cfg = configparser.ConfigParser()
+        cfg.optionxform = str
+        cfg.read('platformio.ini')
+        envs = [s.split(':',1)[1] for s in cfg.sections() if s.startswith('env:')]
+        print(json.dumps(envs))
+        PY
+        echo "environments=$(cat /tmp/envs.json)" >> $GITHUB_OUTPUT
     outputs:
       environments: ${{ steps.envs.outputs.environments }}
 
