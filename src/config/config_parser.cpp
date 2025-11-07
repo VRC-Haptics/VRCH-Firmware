@@ -426,12 +426,13 @@ namespace Parser {
     }
 
     void getPlatform(String &out) {
+        out = "PLATFORM ";
         #ifdef ESP32
-            out = ESP.getChipModel();  // Returns "ESP32", "ESP32-S3", etc.
+            out += ESP.getChipModel();  // Returns "ESP32", "ESP32-S3", etc.
         #elif defined(ESP8266)
-            out = "ESP8266";  // ESP8266 doesn't have getChipModel()
+            out += "ESP8266";  // ESP8266 doesn't have getChipModel()
         #else
-            out = "Unknown";
+            out += "Unknown";
         #endif
     }
 

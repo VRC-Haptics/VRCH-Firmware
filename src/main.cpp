@@ -145,7 +145,9 @@ void loop()
 	{
 		Haptics::globals.updatedMotors = false;
 		Haptics::Wireless::updateMotorVals();
-		Haptics::LEDC::tick(); // only does smth on ESP32 platform
+		#ifdef ESP8266
+		Haptics::LEDC::tick(); // only needed on esp8266
+		#endif
 	}
 
 	// Handle commands (like changing the config, not setting motor values.)
